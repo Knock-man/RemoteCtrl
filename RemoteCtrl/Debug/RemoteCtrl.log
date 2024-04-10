@@ -1,0 +1,14 @@
+﻿  pch.cpp
+  RemoteCtrl.cpp
+  ServerSocket.cpp
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(176,20): warning C4018: “<”: 有符号/无符号不匹配
+  (编译源文件“/ServerSocket.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(198,20): warning C4018: “<”: 有符号/无符号不匹配
+  (编译源文件“/ServerSocket.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(239,22): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
+  (编译源文件“/ServerSocket.cpp”)
+  
+  正在生成代码...
+  RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteCtrl.exe

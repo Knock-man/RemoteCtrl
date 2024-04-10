@@ -99,6 +99,16 @@ bool CServerSocket::Send(CPacket& pack)
 	return send(m_clntsock, pack.Data(), pack.size(), 0) > 0;
 }
 
+bool CServerSocket::GetFilePath(std::string& strPath)
+{
+	if (m_packet.sCmd == 2)
+	{
+		strPath = m_packet.strDate;
+		return true;
+	}
+	return false;
+}
+
 //网络环境初始化
 BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;

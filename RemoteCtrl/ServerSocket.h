@@ -52,6 +52,9 @@ public:
 	bool Send(const void* pData, size_t nSize);
 	bool Send(CPacket& pack);
 
+	//获取文件列表
+	bool GetFilePath(std::string& strPath);
+
 private:
 	//套接字
 	SOCKET m_servsock;

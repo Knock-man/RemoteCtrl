@@ -1,5 +1,9 @@
 ﻿// RemoteCtrl.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
+
+#include<list>
+#include<stdio.h>
+
 #include "pch.h"
 #include "framework.h"
 #include "RemoteCtrl.h"
@@ -29,12 +33,8 @@ void Dump(BYTE* pData, size_t nSize)
     strOut += "\n";
     OutputDebugStringA(strOut.c_str());
 }
-/*
-更改当前的工作驱动器
-int _chdrive(int drive);
-drive 是要更改到的驱动器号码，例如，1 代表 A 驱动器，2 代表 B 驱动器 ，以此类推直到26。
-如果成功，则返回 0；否则返回 -1。
-*/
+
+//查询分区
 int MakeDriverInfo()
 {
     std::string result;
@@ -58,6 +58,72 @@ int MakeDriverInfo()
     //CServerSocket::getInstance()->Send(pack);
     return 0;
   
+}
+
+typedef struct file_info
+{
+    file_info()
+    {
+        IsInvalid = false;//默认为有效文件
+        IsDirectory = -1;
+        HasNext = TRUE;
+        memset(szFileName, 0, sizeof(szFileName));
+    }
+    BOOL IsInvalid;//是否有效
+    BOOL IsDirectory;//文件类型 0文件 1目录
+    BOOL HasNext;//是否还有后续 0没有 1有
+    char szFileName[256];//文件名
+}FILEINFO,*PFILEINFO;
+
+#include <io.h> // 包含用于文件查找的头文件
+int MakeDirectoryInfo()
+{
+    std::string strpath;
+    //std::list<FILEINFO> lstFileInfos;
+    if (!CServerSocket::getInstance()->GetFilePath(strpath))
+    {
+        OutputDebugString(TEXT("当前的命令，不是获取文件目录列表，命令解析错误!!"));
+        return -1;
+    }
+    if (!SetCurrentDirectoryA(strpath.c_str()))//设置为当前工作目录
+    {
+        //设置失败
+        FILEINFO finfo;
+        finfo.IsInvalid = true;//无效文件
+        finfo.IsDirectory = true;//为目录
+        finfo.HasNext = FALSE;//没有后续文件
+        memcpy(finfo.szFileName, strpath.c_str(), strpath.size());//文件路径
+        //lstFileInfos.push_back(finfo);
+        CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
+        CServerSocket::getInstance()->Send(pack);//发送
+        OutputDebugString(TEXT("没有权限访问目录"));
+        return -2;
+    }
+    //设置当前工作目录成功
+    _finddata_t fdata; // 声明变量 fdata
+    int hfind = 0;
+    if ((hfind =_findfirst("*", &fdata)) == -1)//找工作目录中匹配的第一个文件  第一个参数使用通配符代表文件类型
+    {
+        OutputDebugString(TEXT("没有找到任何文件"));
+        return -3;
+    }
+    //发送有效文件给客户端
+    do
+    {
+        FILEINFO finfo;
+        finfo.IsDirectory = ((fdata.attrib & _A_SUBDIR) != 0);
+        memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
+        CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
+        CServerSocket::getInstance()->Send(pack);//发送
+        //lstFileInfos.push_back(finfo);
+    } while (!_findnext(hfind, &fdata));//查找工作目录匹配的下一个文件
+    
+    //发送结束文件
+    FILEINFO finfo;
+    finfo.HasNext = false;//设置结束文件标记
+    CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
+    CServerSocket::getInstance()->Send(pack);//发送
+    return 0;
 }
 
 int main()
@@ -103,8 +169,11 @@ int main()
             int nCmd = 1;
             switch (nCmd)
             {
-            case 1:
-                MakeDriverInfo();//查看磁盘分区
+            case 1://查看磁盘分区
+                MakeDriverInfo();
+                break;
+            case 2://查看指定目录下的文件
+                MakeDirectoryInfo();
                 break;
             }
             
