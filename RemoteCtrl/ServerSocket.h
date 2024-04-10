@@ -1,6 +1,28 @@
 #pragma once
 #include"framework.h"
 #include"pch.h"
+
+#define BUFSIZE 4096
+
+//包 [包头 包长度 控制命令 包数据 和校验]
+class CPacket
+{
+public:
+	CPacket();
+	CPacket(const BYTE* pData, size_t& nSize);
+	CPacket(const CPacket& pack);
+	CPacket& operator=(const CPacket& pack);
+	~CPacket();
+
+	//private:
+		//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
+	WORD sHead;//包头 FEFF  
+	DWORD nLength;//包长度（从控制命令开始，到和校验结束） 
+	WORD sCmd;//控制命令
+	std::string strDate;//包数据
+	WORD sSum;//和校验
+};
+
 class CServerSocket
 {
 public:
@@ -25,6 +47,9 @@ private:
 	SOCKET m_servsock;
 	SOCKET m_clntsock;
 
+	//数据包
+	CPacket m_packet;
+
 	//构造
 	CServerSocket();
 
@@ -37,3 +62,4 @@ private:
 	//初始化网络环境
 	BOOL InitSockEnv();
 };
+

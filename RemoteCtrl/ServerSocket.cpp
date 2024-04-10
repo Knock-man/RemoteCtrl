@@ -61,17 +61,28 @@ bool CServerSocket::AcceptClient()
 //接收
 int CServerSocket::DealCommand()
 {
-	if (m_clntsock == -1)return false;
-	char buffer[1024] = "";
+	if (m_clntsock == -1)return -1;
+	char* buffer = new char[BUFSIZE];
+	memset(buffer, 0, BUFSIZE);
+	size_t index = 0;//缓冲区空闲位置指针（实际存储数据大小）
 	while (true)
 	{
-		int len = recv(m_clntsock, buffer, sizeof(buffer), 0);
+		size_t len = recv(m_clntsock, buffer+index, BUFSIZE-index, 0);
 		if (len < 0)
 		{
 			return -1;
 		}
-		//TODO:处理命令
+		index += len;
+		len = index;
+		m_packet = CPacket((BYTE*)buffer, len);//len传入：buffer数据长度   传出：已解析数据长度
+		if (len > 0)//解析成功
+		{
+			memmove(buffer, buffer + len, BUFSIZE - len);//剩余解析数据移到缓冲区头部
+			index -= len;
+			return m_packet.sCmd;
+		}
 	}
+	return -1;
 }
 
 //发送
@@ -89,3 +100,91 @@ BOOL  CServerSocket::InitSockEnv() {
 	}
 	return TRUE;
 }
+
+CPacket::CPacket():sHead(0),nLength(0),sCmd(0),sSum(0)
+{
+
+}
+
+CPacket::CPacket(const BYTE* pData, size_t& nSize)
+{
+
+	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
+	size_t i = 0;
+	//取包头位
+	for (; i < nSize; i++)
+	{
+		if (*(WORD*)(pData + i) == 0xFEFF)//找到包头
+		{
+			sHead = *(WORD*)(pData + i);
+			//i++;//偏移到包头末尾
+			break;
+		}
+	}
+
+	if ((i+2+4+2+2) > nSize)//包数据不全 只有 [包头 包长度 控制命令 和校验]  没有数据段 解析失败
+	{
+		nSize = 0;
+		return;
+	}
+
+	//取包长度位
+	nLength = *(DWORD*)(pData + i+2);
+	if (nLength + 2 + 4 > nSize)//包未完全接收到 nLength+sizeof(包头)+sizeof(包长度) pData缓冲区越界了
+	{
+		nSize = 0;
+		return;
+	}
+
+	//取出控制命令位
+	sCmd = *(WORD*)(pData + i + 2 + 4);
+
+	//保存数据段
+	int dataLength = nLength - 2 - 2;//数据段长度
+	if (nLength > 4)
+	{
+		strDate.resize(dataLength);//nLength - [控制命令位长度] - [校验位长度]
+		memcpy((void*)strDate.c_str(), pData + 8, dataLength);
+	}
+
+	//取出校验位 并校验
+	sSum = *(pData + i + 2 + 4 + 2+ dataLength);
+
+	WORD sum = 0;
+	for (int j = 0; j < strDate.size(); i++)
+	{
+		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
+	}
+	if (sum == sSum)
+	{
+		nSize = nLength + 2 + 4;
+		return;
+	}
+	nSize = 0;
+}
+CPacket::CPacket(const CPacket& pack)
+{
+	sHead = pack.sHead;
+	nLength = pack.nLength;
+	sCmd = pack.sCmd;
+	strDate = pack.strDate;
+	sSum = pack.sSum;
+}
+CPacket& CPacket::operator=(const CPacket& pack)
+{
+	if (this != &pack)
+	{
+		sHead = pack.sHead;
+		nLength = pack.nLength;
+		sCmd = pack.sCmd;
+		strDate = pack.strDate;
+		sSum = pack.sSum;
+	}
+	return *this;
+	
+}
+CPacket::~CPacket()
+{
+
+}
+
