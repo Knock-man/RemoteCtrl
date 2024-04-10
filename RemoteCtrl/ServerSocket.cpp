@@ -2,6 +2,7 @@
 #include "ServerSocket.h"
 
 
+//网络服务类
 //构造
 CServerSocket::CServerSocket() {
 	if (InitSockEnv() == FALSE)
@@ -35,7 +36,7 @@ bool CServerSocket::InitSocket()
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(9527);
+	serv_addr.sin_port = htons(PORT);
 
 	if (bind(m_servsock, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
 	{
@@ -92,6 +93,7 @@ bool CServerSocket::Send(const void* pData, size_t nSize)
 	return send(m_clntsock, (const char*)pData, nSize, 0) > 0;
 }
 
+//网络环境初始化
 BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;
 	if (WSAStartup(MAKEWORD(1, 1), &data))
@@ -101,11 +103,14 @@ BOOL  CServerSocket::InitSockEnv() {
 	return TRUE;
 }
 
+
+
+//包类
+
 CPacket::CPacket():sHead(0),nLength(0),sCmd(0),sSum(0)
 {
 
 }
-
 CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
 

@@ -14,8 +14,8 @@ public:
 	CPacket& operator=(const CPacket& pack);
 	~CPacket();
 
-	//private:
-		//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
+public:
+	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
 	WORD sHead;//包头 FEFF  
 	DWORD nLength;//包长度（从控制命令开始，到和校验结束） 
 	WORD sCmd;//控制命令
