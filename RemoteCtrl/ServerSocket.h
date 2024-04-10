@@ -3,16 +3,23 @@
 #include"pch.h"
 
 #define BUFSIZE 4096
+#define PORT 7654
 
-//包 [包头 包长度 控制命令 包数据 和校验]
+#pragma pack(push)
+#pragma pack(1)
+//包 [包头2 包长度4 控制命令2 包数据 和校验2]
 class CPacket
 {
 public:
 	CPacket();
-	CPacket(const BYTE* pData, size_t& nSize);
+	CPacket(const BYTE* pData, size_t& nSize);//解包
+	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
 	CPacket(const CPacket& pack);
 	CPacket& operator=(const CPacket& pack);
 	~CPacket();
+
+	int size();//包大小
+	const char* Data();//包
 
 public:
 	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
@@ -21,7 +28,9 @@ public:
 	WORD sCmd;//控制命令
 	std::string strDate;//包数据
 	WORD sSum;//和校验
+	std::string strOut;//整个包的数据
 };
+#pragma pack(pop)
 
 class CServerSocket
 {
@@ -41,6 +50,7 @@ public:
 
 	//发送消息
 	bool Send(const void* pData, size_t nSize);
+	bool Send(CPacket& pack);
 
 private:
 	//套接字

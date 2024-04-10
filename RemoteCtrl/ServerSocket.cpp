@@ -93,6 +93,12 @@ bool CServerSocket::Send(const void* pData, size_t nSize)
 	return send(m_clntsock, (const char*)pData, nSize, 0) > 0;
 }
 
+bool CServerSocket::Send(CPacket& pack)
+{
+	if (m_clntsock == -1)return false;
+	return send(m_clntsock, pack.Data(), pack.size(), 0) > 0;
+}
+
 //网络环境初始化
 BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;
@@ -111,6 +117,7 @@ CPacket::CPacket():sHead(0),nLength(0),sCmd(0),sSum(0)
 {
 
 }
+//解包：解析包
 CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
 
@@ -156,7 +163,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 	sSum = *(pData + i + 2 + 4 + 2+ dataLength);
 
 	WORD sum = 0;
-	for (int j = 0; j < strDate.size(); i++)
+	for (int j = 0; j < strDate.size(); j++)
 	{
 		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
@@ -166,6 +173,22 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 		return;
 	}
 	nSize = 0;
+}
+//打包：封装成包
+CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
+{
+	sHead = 0xFEFF;
+	nLength = nSize + 4;
+	sCmd = nCmd;
+	strDate.resize(nSize);
+	//打包数据段
+	memcpy((void*)strDate.c_str(), pData, nSize);
+	//打包检验位
+	sSum = 0;
+	for (int j = 0; j < strDate.size(); j++)
+	{
+		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
+	}
 }
 CPacket::CPacket(const CPacket& pack)
 {
@@ -191,5 +214,22 @@ CPacket& CPacket::operator=(const CPacket& pack)
 CPacket::~CPacket()
 {
 
+}
+
+int CPacket::size()
+{
+	return nLength+6;
+}
+
+const char* CPacket::Data()
+{
+	strOut.resize(nLength + 6);
+	BYTE* pData = (BYTE*)strOut.c_str();
+	*(WORD*)pData = sHead;
+	*(WORD*)(pData+2) = nLength;
+	*(WORD*)(pData + 2 +4) = sCmd;
+	memcpy(pData + 2 + 4 + 2, strDate.c_str(), strDate.size());
+	*(WORD*)(pData + 2 + 4+2+ strDate.size()) = sSum;
+	return strOut.c_str();
 }
 
