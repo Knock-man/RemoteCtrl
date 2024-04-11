@@ -3,10 +3,12 @@
 
 #include<list>
 #include<stdio.h>
+#include<atlimage.h>
 
 #include "pch.h"
 #include "framework.h"
 #include "RemoteCtrl.h"
+
 
 #include "ServerSocket.h"
 
@@ -186,7 +188,7 @@ int DownloadFile()
     CServerSocket::getInstance()->Send(pack);
     
 }
-
+//鼠标事件
 int MouseEvent()
 {
     MOUSEEV mouse;
@@ -283,7 +285,58 @@ int MouseEvent()
         OutputDebugString(TEXT("获取鼠标操作参数失败！！"));
         return -1;
     }
+    return 0;
+}
 
+#include <atlimage.h>
+int SendScreen()
+{
+    
+    //屏幕截图
+    HDC hScreen = ::GetDC(NULL);//获取屏幕上下文句柄（屏幕截图）
+    int nBitPerPixel = GetDeviceCaps(hScreen, BITSPIXEL);//RGB位深度 R8位 G8位 B8位 共24位
+    int nWidth = GetDeviceCaps(hScreen, HORZRES);//宽
+    int nHeight = GetDeviceCaps(hScreen, VERTRES);
+
+    //创建一个图像对象
+    CImage screen;
+    screen.Create(nWidth, nHeight, nBitPerPixel);
+
+    BitBlt(screen.GetDC(), 0, 0, 1920, 1020, hScreen, 0, 0, SRCCOPY);//将hScreen图像复制到screen图像中
+
+    //删除屏幕截图
+    ReleaseDC(NULL, hScreen);
+
+    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, 0);//分配一个可移动的内存块
+    if (hMem == NULL)return -1;
+    IStream* pStream = NULL;//声明一个指向IStream接口的指针
+    HRESULT ret = CreateStreamOnHGlobal(hMem, TRUE, &pStream);//基于内存块创建一个内存流，pStream指向流对象
+    if (ret == S_OK)
+    {
+        screen.Save(pStream, Gdiplus::ImageFormatPNG);//将图片保存到内存流中
+        LARGE_INTEGER bg = { 0 };
+        pStream->Seek(bg,STREAM_SEEK_SET, NULL);//将流指针移到流的起始位置
+        PBYTE pData = (PBYTE)GlobalLock(hMem);//锁定内存块，转化为字节型指针，获取内存块的起始地址
+        SIZE_T nSize = GlobalSize(hMem);//获取分配内存块大小
+        CPacket pack(6, pData, nSize);
+        CServerSocket::getInstance()->Send(pack);
+        GlobalUnlock(hMem);//内存块解锁
+    }
+    
+
+    /*
+    //测试PNG和JPEGCPU损耗对比
+    DWORD tick = GetTickCount64();
+    screen.Save(TEXT("test2020.png"), Gdiplus::ImageFormatPNG);
+    TRACE("pnd %d\n", GetTickCount64() - tick);
+    tick = GetTickCount64();
+    screen.Save(TEXT("test2020.jpg"), Gdiplus::ImageFormatJPEG);
+    TRACE("JPEG %d\n", GetTickCount64() - tick);
+    */
+    pStream->Release();//释放流
+    GlobalFree(hMem);//释放内存块
+    screen.ReleaseDC();
+    
     return 0;
 }
 int main()
@@ -326,7 +379,7 @@ int main()
             //    int ret = pserver->DealCommand();
             //    //TODO:处理命令
             //}
-            int nCmd = 1;
+            int nCmd = 6;
             switch (nCmd)
             {
             case 1://查看磁盘分区
@@ -344,6 +397,10 @@ int main()
             case 5://鼠标操作
                 MouseEvent();
                 break;
+            case 6://发送屏幕内容=>发送屏幕的截图
+                SendScreen();
+                break;
+
             }
             
 
