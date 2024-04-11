@@ -10,6 +10,7 @@
 #include "RemoteCtrl.h"
 
 
+
 #include "ServerSocket.h"
 
 #ifdef _DEBUG
@@ -287,11 +288,9 @@ int MouseEvent()
     }
     return 0;
 }
-
 #include <atlimage.h>
 int SendScreen()
 {
-    
     //屏幕截图
     HDC hScreen = ::GetDC(NULL);//获取屏幕上下文句柄（屏幕截图）
     int nBitPerPixel = GetDeviceCaps(hScreen, BITSPIXEL);//RGB位深度 R8位 G8位 B8位 共24位
@@ -315,14 +314,14 @@ int SendScreen()
     {
         screen.Save(pStream, Gdiplus::ImageFormatPNG);//将图片保存到内存流中
         LARGE_INTEGER bg = { 0 };
-        pStream->Seek(bg,STREAM_SEEK_SET, NULL);//将流指针移到流的起始位置
+        pStream->Seek(bg, STREAM_SEEK_SET, NULL);//将流指针移到流的起始位置
         PBYTE pData = (PBYTE)GlobalLock(hMem);//锁定内存块，转化为字节型指针，获取内存块的起始地址
         SIZE_T nSize = GlobalSize(hMem);//获取分配内存块大小
         CPacket pack(6, pData, nSize);
         CServerSocket::getInstance()->Send(pack);
         GlobalUnlock(hMem);//内存块解锁
     }
-    
+
 
     /*
     //测试PNG和JPEGCPU损耗对比
@@ -336,9 +335,88 @@ int SendScreen()
     pStream->Release();//释放流
     GlobalFree(hMem);//释放内存块
     screen.ReleaseDC();
-    
+
     return 0;
 }
+
+#include "LockDialog.h"
+CLockDialog dlg;
+unsigned threadid = 0;
+//遮蔽框线程函数
+unsigned __stdcall threadLockDlg(void* arg)
+{
+    //锁机弹出对话框
+    dlg.Create(IDD_DIALOG_INFO, NULL);//创建对话框
+    dlg.ShowWindow(SW_SHOW);
+
+    //限制鼠标活动范围
+    CRect rect;//声明矩形区域
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = GetSystemMetrics(SM_CXFULLSCREEN);//获得屏幕像素大小
+    rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN) + 70;
+    dlg.MoveWindow(rect);//将窗口移到矩形区域
+
+    //窗口置于顶层
+    dlg.SetWindowPos(&dlg.wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+    //隐藏鼠标
+    ShowCursor(false);
+    //隐藏任务栏
+    ::ShowWindow(::FindWindow(TEXT("shell_TrayWnd"), NULL), SW_HIDE);
+    //限制鼠标只能在左上角一个像素点移动
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = 1;
+    rect.bottom = 1;
+    ClipCursor(rect);
+
+    //消息循环
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+        //按按键退出消息循环
+        if (msg.message == WM_KEYDOWN)
+        {
+            if (msg.wParam == 0x1B)break;//按Esc键退出
+        }
+    }
+    
+    ::ShowWindow(::FindWindow(TEXT("shell_TrayWnd"), NULL), SW_SHOW);
+    ShowCursor(true);
+    dlg.DestroyWindow();
+    _endthreadex(0);
+    return 0;
+}
+
+//锁机
+int LockMachine()
+{
+    if ((dlg.m_hWnd == NULL) || (dlg.m_hWnd == INVALID_HANDLE_VALUE))
+    {
+        //开辟线程打开遮蔽框
+        _beginthreadex(NULL, 0, threadLockDlg, NULL,0, &threadid);
+        
+    }
+    //发送应答消息
+    CPacket pack(7, NULL, 0);
+    CServerSocket::getInstance()->Send(pack);
+    return 0;
+    
+    
+  
+}
+//解锁
+int UnlockMachine() {
+    
+    //向指定线程发送消息Esc按键消息
+    PostThreadMessage(threadid, WM_KEYDOWN, 0x1B, 0);
+    CPacket pack(8, NULL, 0);
+    CServerSocket::getInstance()->Send(pack);
+    return 0;
+}
+
 int main()
 {
     int nRetCode = 0;
@@ -347,7 +425,7 @@ int main()
 
     if (hModule != nullptr)
     {
-        // 初始化 MFC 并在失败时显示错误
+        // 初始化 MFC 并在失败时显示错误400
         if (!AfxWinInit(hModule, nullptr, ::GetCommandLine(), 0))
         {
             // TODO: 在此处为应用程序的行为编写代码。
@@ -356,7 +434,6 @@ int main()
         }
         else
         {
-
             //// TODO: 在此处为应用程序的行为编写代码。
             //CServerSocket* pserver =  CServerSocket::getInstance();
             //int count = 0;
@@ -379,7 +456,8 @@ int main()
             //    int ret = pserver->DealCommand();
             //    //TODO:处理命令
             //}
-            int nCmd = 6;
+            
+            int nCmd = 7;
             switch (nCmd)
             {
             case 1://查看磁盘分区
@@ -400,8 +478,17 @@ int main()
             case 6://发送屏幕内容=>发送屏幕的截图
                 SendScreen();
                 break;
-
+            case 7://锁机
+                LockMachine();
+                Sleep(50);
+                LockMachine();
+                break;
+            case 8://解锁
+                UnlockMachine();
+                break;
             }
+            Sleep(5000); UnlockMachine();
+            while (dlg.m_hWnd != NULL)Sleep(10);
             
 
         }

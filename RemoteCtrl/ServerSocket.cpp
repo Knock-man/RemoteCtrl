@@ -50,6 +50,7 @@ bool CServerSocket::InitSocket()
 	return true;
 }
 
+//接收客户端连接
 bool CServerSocket::AcceptClient()
 {
 	sockaddr_in client_addr;
@@ -59,7 +60,7 @@ bool CServerSocket::AcceptClient()
 	return true;
 }
 
-//接收
+//接收消息
 int CServerSocket::DealCommand()
 {
 	if (m_clntsock == -1)return -1;
