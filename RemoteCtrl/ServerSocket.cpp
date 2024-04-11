@@ -101,7 +101,7 @@ bool CServerSocket::Send(CPacket& pack)
 
 bool CServerSocket::GetFilePath(std::string& strPath)
 {
-	if (m_packet.sCmd == 2)
+	if ((m_packet.sCmd == 2)|| (m_packet.sCmd == 3)|| (m_packet.sCmd == 4))
 	{
 		strPath = m_packet.strDate;
 		return true;
@@ -190,9 +190,19 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	sHead = 0xFEFF;
 	nLength = nSize + 4;
 	sCmd = nCmd;
-	strDate.resize(nSize);
-	//打包数据段
-	memcpy((void*)strDate.c_str(), pData, nSize);
+
+
+	if (nSize > 0)//有数据段
+	{
+		//打包数据段
+		strDate.resize(nSize);
+		memcpy((void*)strDate.c_str(), pData, nSize);
+	}
+	else//无数据段
+	{
+		strDate.clear();
+	}
+	
 	//打包检验位
 	sSum = 0;
 	for (int j = 0; j < strDate.size(); j++)

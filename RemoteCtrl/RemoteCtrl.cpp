@@ -126,6 +126,59 @@ int MakeDirectoryInfo()
     return 0;
 }
 
+//运行文件
+int RunFile()
+{
+    std::string strPath;
+    CServerSocket::getInstance()->GetFilePath(strPath);
+    ShellExecuteA(NULL, NULL, strPath.c_str(), NULL , NULL, SW_SHOWNORMAL);//类似双击文件
+
+    //发送回应ACK
+    CPacket pack(3, NULL, 0);
+    CServerSocket::getInstance()->Send(pack);
+    return 0;
+
+}
+
+int DownloadFile()
+{
+    //打开文件
+    std::string strPath;
+    CServerSocket::getInstance()->GetFilePath(strPath);
+    long long data = 0;
+    FILE* pFile = NULL;
+    errno_t err = fopen_s(&pFile,strPath.c_str(), "rb");
+    if (err!=0)
+    {
+        CPacket pack(4, (BYTE*)&data, 8);
+        CServerSocket::getInstance()->Send(pack);
+        return -1;
+    }
+
+    if (pFile != NULL)
+    {
+        //向客户端发送文件总大小
+        fseek(pFile, 0, SEEK_END);//pFile指针移到文件末尾，偏移量为0
+        data = _ftelli64(pFile);//获取文件当前位置
+        CPacket head(4, (BYTE*)&data, 8);
+        CServerSocket::getInstance()->Send(head);
+        fseek(pFile, 0, SEEK_SET);//pFile指针移到文件开头，偏移量为0
+
+        //1KB 1KB向客户端发送
+        char buffer[1024] = "";
+        size_t rlen = 0;
+        do {
+            rlen = fread(buffer, 1, 1024, pFile);//每次读取1024个char字符  pFIle指针会向后移动
+            CPacket pack(4, (BYTE*)buffer, rlen);
+            CServerSocket::getInstance()->Send(pack);
+        } while (rlen >= 1024);
+        fclose(pFile);
+    }
+    //发送结束标记
+    CPacket pack(4, NULL, 0);
+    CServerSocket::getInstance()->Send(pack);
+    
+}
 int main()
 {
     int nRetCode = 0;
@@ -175,9 +228,12 @@ int main()
             case 2://查看指定目录下的文件
                 MakeDirectoryInfo();
                 break;
+            case 3://打开文件
+                RunFile();
+                break;
+            case 4://下载文件
+                DownloadFile();
             }
-            
-
         }
     }
     else
