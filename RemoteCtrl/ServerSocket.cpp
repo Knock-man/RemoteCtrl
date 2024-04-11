@@ -109,6 +109,17 @@ bool CServerSocket::GetFilePath(std::string& strPath)
 	return false;
 }
 
+//获取鼠标事件
+bool CServerSocket::GetMouseEvent(MOUSEEV& mouse)
+{
+	if (m_packet.sCmd == 5)
+	{
+		memcpy(&mouse, m_packet.strDate.c_str(), sizeof(MOUSEEV));
+		return true;
+	}
+	return false;
+}
+
 //网络环境初始化
 BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;

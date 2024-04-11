@@ -34,7 +34,7 @@ void Dump(BYTE* pData, size_t nSize)
     OutputDebugStringA(strOut.c_str());
 }
 
-//查询分区
+//查询磁盘分区
 int MakeDriverInfo()
 {
     std::string result;
@@ -54,12 +54,13 @@ int MakeDriverInfo()
     }
 
     CPacket pack(1,(BYTE*)result.c_str(), result.size());
-    Dump((BYTE*)pack.Data(), pack.size());
-    //CServerSocket::getInstance()->Send(pack);
+    //Dump((BYTE*)pack.Data(), pack.size());
+    CServerSocket::getInstance()->Send(pack);
     return 0;
   
 }
 
+//文件信息结构体
 typedef struct file_info
 {
     file_info()
@@ -76,6 +77,7 @@ typedef struct file_info
 }FILEINFO,*PFILEINFO;
 
 #include <io.h> // 包含用于文件查找的头文件
+//查询指定目录下的所有文件
 int MakeDirectoryInfo()
 {
     std::string strpath;
@@ -85,7 +87,9 @@ int MakeDirectoryInfo()
         OutputDebugString(TEXT("当前的命令，不是获取文件目录列表，命令解析错误!!"));
         return -1;
     }
-    if (!SetCurrentDirectoryA(strpath.c_str()))//设置为当前工作目录
+
+    //设置为当前工作目录
+    if (!SetCurrentDirectoryA(strpath.c_str()))
     {
         //设置失败
         FILEINFO finfo;
@@ -99,6 +103,7 @@ int MakeDirectoryInfo()
         OutputDebugString(TEXT("没有权限访问目录"));
         return -2;
     }
+
     //设置当前工作目录成功
     _finddata_t fdata; // 声明变量 fdata
     int hfind = 0;
@@ -107,6 +112,7 @@ int MakeDirectoryInfo()
         OutputDebugString(TEXT("没有找到任何文件"));
         return -3;
     }
+
     //发送有效文件给客户端
     do
     {
@@ -126,7 +132,7 @@ int MakeDirectoryInfo()
     return 0;
 }
 
-//运行文件
+//运行文件指定文件
 int RunFile()
 {
     std::string strPath;
@@ -140,6 +146,7 @@ int RunFile()
 
 }
 
+//打开下载文件（上传给客户端）
 int DownloadFile()
 {
     //打开文件
@@ -178,6 +185,106 @@ int DownloadFile()
     CPacket pack(4, NULL, 0);
     CServerSocket::getInstance()->Send(pack);
     
+}
+
+int MouseEvent()
+{
+    MOUSEEV mouse;
+    if (CServerSocket::getInstance()->GetMouseEvent(mouse))
+    {
+        SetCursorPos(mouse.ptXY.x, mouse.ptXY.y);
+        DWORD nFlags = 0;
+        switch (mouse.nButton)
+        {
+        case 0://左键
+            nFlags = 1;
+            break;
+        case 1://右键
+            nFlags = 2;
+            break;
+        case 2://中键
+            nFlags = 4;
+            break;
+        case 4://没有按键
+            nFlags = 8;
+            break;
+        }
+        if(nFlags!=8)SetCursorPos(mouse.ptXY.x, mouse.ptXY.y);
+        switch (mouse.nAction)
+        {
+        case 0://单击
+            nFlags |= 0x10;
+            break;
+        case 1://双击
+            nFlags |= 0x20;
+            break;
+        case 2://按下
+            nFlags |= 0x40;
+            break;
+        case 3://放开
+            nFlags |= 0x80;
+            break;
+        default:
+            break;
+        }
+
+        switch (nFlags)
+        {
+        case 0x21://左键双击
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, GetMessageExtraInfo());
+            //没有break会接着执行一次单击
+        case 0x11://左键单击
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x41://左键按下
+            mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x81://左键放开
+            mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x22://右键双击
+            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, GetMessageExtraInfo());
+        case 0x12://右键单击
+            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        
+        case 0x42://右键按下
+            mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x82://右键放开
+            mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x24://中建双击
+            mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, GetMessageExtraInfo());
+        case 0x14://中键单击
+            mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, GetMessageExtraInfo());
+            mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        
+        case 0x44://中键按下
+            mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x84://中键放开
+            mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, GetMessageExtraInfo());
+            break;
+        case 0x08://单纯鼠标移动
+            mouse_event(MOUSEEVENTF_MOVE, mouse.ptXY.x, mouse.ptXY.y, 0, GetMessageExtraInfo());
+            break;
+        }
+        CPacket pack(4, NULL, 0);
+        CServerSocket::getInstance()->Send(pack);
+    }
+    else {
+        OutputDebugString(TEXT("获取鼠标操作参数失败！！"));
+        return -1;
+    }
+
+    return 0;
 }
 int main()
 {
@@ -225,7 +332,7 @@ int main()
             case 1://查看磁盘分区
                 MakeDriverInfo();
                 break;
-            case 2://查看指定目录下的文件
+            case 2://查看指定目录下的所有文件
                 MakeDirectoryInfo();
                 break;
             case 3://打开文件
@@ -233,7 +340,13 @@ int main()
                 break;
             case 4://下载文件
                 DownloadFile();
+                break;
+            case 5://鼠标操作
+                MouseEvent();
+                break;
             }
+            
+
         }
     }
     else
