@@ -4,7 +4,7 @@
 #include "string"
 
 #define BUFSIZE 4096
-#define PORT 7654
+#define PORT 9527
 
 #pragma pack(push)
 #pragma pack(1)

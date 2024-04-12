@@ -1,2 +1,15 @@
-﻿  RemoteClient.cpp
+﻿  pch.cpp
+  ClientSocket.cpp
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(198,20): warning C4018: “<”: 有符号/无符号不匹配
+  (编译源文件“/ClientSocket.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(230,20): warning C4018: “<”: 有符号/无符号不匹配
+  (编译源文件“/ClientSocket.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(271,24): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
+  (编译源文件“/ClientSocket.cpp”)
+  
+  RemoteClient.cpp
+  RemoteClientDlg.cpp
+  正在生成代码...
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe

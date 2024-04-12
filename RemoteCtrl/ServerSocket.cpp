@@ -41,8 +41,10 @@ bool CServerSocket::InitSocket()
 	sockaddr_in serv_addr;
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	//serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(PORT);
+	//serv_addr.sin_port = PORT;
 
 	if (bind(m_servsock, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
 	{
@@ -93,6 +95,12 @@ int CServerSocket::DealCommand()
 	return -1;
 }
 
+void CServerSocket::CloseSocket()
+{
+	closesocket(m_clntsock);
+	m_clntsock = -1;
+}
+
 //发送
 bool CServerSocket::Send(const void* pData, size_t nSize)
 {
@@ -125,6 +133,11 @@ bool CServerSocket::GetMouseEvent(MOUSEEV& mouse)
 		return true;
 	}
 	return false;
+}
+
+CPacket& CServerSocket::GetPacket()
+{
+	return m_packet;
 }
 
 //网络环境初始化

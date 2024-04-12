@@ -3,7 +3,7 @@
 #include"pch.h"
 
 #define BUFSIZE 4096
-#define PORT 7654
+#define PORT 9527
 
 #pragma pack(push)
 #pragma pack(1)
@@ -69,7 +69,15 @@ public:
 	//获取文件列表
 	bool GetFilePath(std::string& strPath);
 
+	//获取鼠标事件
 	bool GetMouseEvent(MOUSEEV& mouse);
+
+	//获取数据包
+	CPacket& GetPacket();
+
+	//关闭客户端连接
+	void CloseSocket();
+	
 private:
 	//套接字
 	SOCKET m_servsock;
