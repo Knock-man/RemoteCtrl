@@ -146,7 +146,6 @@ int RunFile()
     CPacket pack(3, NULL, 0);
     CServerSocket::getInstance()->Send(pack);
     return 0;
-
 }
 
 //打开下载文件（上传给客户端）
@@ -403,9 +402,6 @@ int LockMachine()
     CPacket pack(7, NULL, 0);
     CServerSocket::getInstance()->Send(pack);
     return 0;
-    
-    
-  
 }
 //解锁
 int UnlockMachine() {

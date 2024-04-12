@@ -5,6 +5,7 @@
 //网络服务类
 //构造
 CServerSocket::CServerSocket() {
+	m_clntsock = -1;
 	if (InitSockEnv() == FALSE)
 	{
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
@@ -12,7 +13,12 @@ CServerSocket::CServerSocket() {
 	}
 
 	m_servsock = socket(AF_INET, SOCK_STREAM, 0);
-	m_clntsock = -1;
+};
+
+CServerSocket::CServerSocket(const CServerSocket& ss)
+{
+	m_clntsock = ss.m_clntsock;
+	m_servsock = ss.m_servsock;
 };
 
 //析构

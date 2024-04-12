@@ -84,8 +84,8 @@ private:
 	//析构
 	~CServerSocket();
 
-	CServerSocket(const CServerSocket&) = delete;
-	CServerSocket& operator=(const CServerSocket&) = delete;
+	CServerSocket(const CServerSocket&);
+	CServerSocket& operator=(const CServerSocket&) {};
 
 	//初始化网络环境
 	BOOL InitSockEnv();
