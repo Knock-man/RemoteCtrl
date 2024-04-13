@@ -8,7 +8,4 @@ C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(245,20):
 C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(286,24): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
   (编译源文件“/ClientSocket.cpp”)
   
-  RemoteClient.cpp
-  RemoteClientDlg.cpp
-  正在生成代码...
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe

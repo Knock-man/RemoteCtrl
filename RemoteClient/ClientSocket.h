@@ -55,7 +55,7 @@ public:
 
 
 	//Ì×½Ó×Ö³õÊ¼»¯
-	bool InitSocket(const std::string& strIPAddress);
+	bool CClientSocket::InitSocket(int nIP, int nPort);
 
 	void CloseSocket();
 

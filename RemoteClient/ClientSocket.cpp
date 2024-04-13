@@ -47,7 +47,7 @@ std::string GetErrorInfo(int wsaErrCode)
 }
 
 //套接字初始化
-bool CClientSocket::InitSocket(const std::string& strIPAddress)
+bool CClientSocket::InitSocket(int nIP,int nPort)
 {
 	//不能在构造的时候初始化套接字，因为单例模式的对象生命周期是和程序一样的，所以程序只要没有关闭，上一次的套接字依旧存在，不能再重新分配套接字
 	if (m_sock != -1)CloseSocket();//保证分配的套接字是新的套接字
@@ -55,9 +55,9 @@ bool CClientSocket::InitSocket(const std::string& strIPAddress)
 	if (m_sock == -1)return false;
 	sockaddr_in serv_addr;
 	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_addr.s_addr = inet_addr(strIPAddress.c_str());
+	serv_addr.sin_addr.s_addr = htonl(nIP);
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(PORT);
+	serv_addr.sin_port = htons(nPort);
 	if (serv_addr.sin_addr.s_addr == INADDR_ANY)
 	{
 		AfxMessageBox("指定的IP地址不存在");

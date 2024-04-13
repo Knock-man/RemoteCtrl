@@ -33,4 +33,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedBtnTest();
+	DWORD IP_Address;
+	CString IP_PORT;
 };
