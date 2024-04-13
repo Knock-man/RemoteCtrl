@@ -71,15 +71,23 @@ bool CServerSocket::AcceptClient()
 //接收消息
 int CServerSocket::DealCommand()
 {
+	TRACE("开始等待客户端数据\r\n");
 	if (m_clntsock == -1)return -1;
 	char* buffer = new char[BUFSIZE];
+	if (buffer == NULL)
+	{
+		TRACE("内存不足!\r\n");
+		return -2;
+	}
 	memset(buffer, 0, BUFSIZE);
 	size_t index = 0;//缓冲区空闲位置指针（实际存储数据大小）
 	while (true)
 	{
 		size_t len = recv(m_clntsock, buffer+index, BUFSIZE-index, 0);
+		TRACE("recv %d\r\n", len);
 		if (len < 0)
 		{
+			delete[] buffer;
 			return -1;
 		}
 		index += len;
@@ -89,9 +97,11 @@ int CServerSocket::DealCommand()
 		{
 			memmove(buffer, buffer + len, BUFSIZE - len);//剩余解析数据移到缓冲区头部
 			index -= len;
+			delete[] buffer;
 			return m_packet.sCmd;
 		}
 	}
+	delete[] buffer;
 	return -1;
 }
 

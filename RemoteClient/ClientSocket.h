@@ -2,7 +2,7 @@
 #include"framework.h"
 #include"pch.h"
 #include "string"
-
+#include <vector>
 #define BUFSIZE 4096
 #define PORT 9527
 
@@ -57,6 +57,7 @@ public:
 	//套接字初始化
 	bool InitSocket(const std::string& strIPAddress);
 
+	void CloseSocket();
 
 	//接收消息
 	int DealCommand();
@@ -69,12 +70,16 @@ public:
 	bool GetFilePath(std::string& strPath);
 
 	bool GetMouseEvent(MOUSEEV& mouse);
+
+	CPacket& GetPacket();
 private:
 	//套接字
 	SOCKET m_sock;
 
 	//数据包
 	CPacket m_packet;
+
+	std::vector<char> m_buffer;
 
 	//构造
 	CClientSocket();

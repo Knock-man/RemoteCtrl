@@ -10,8 +10,8 @@ CClientSocket::CClientSocket() {
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
 		exit(0);
 	}
-
-	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	m_buffer.resize(BUFSIZE);
+	//m_sock = socket(AF_INET, SOCK_STREAM, 0);
 };
 
 //析构
@@ -49,6 +49,9 @@ std::string GetErrorInfo(int wsaErrCode)
 //套接字初始化
 bool CClientSocket::InitSocket(const std::string& strIPAddress)
 {
+	//不能在构造的时候初始化套接字，因为单例模式的对象生命周期是和程序一样的，所以程序只要没有关闭，上一次的套接字依旧存在，不能再重新分配套接字
+	if (m_sock != -1)CloseSocket();//保证分配的套接字是新的套接字
+	m_sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (m_sock == -1)return false;
 	sockaddr_in serv_addr;
 	memset(&serv_addr, 0, sizeof(serv_addr));
@@ -70,11 +73,22 @@ bool CClientSocket::InitSocket(const std::string& strIPAddress)
 	return true;
 }
 
+void CClientSocket::CloseSocket()
+{
+	closesocket(m_sock);
+	m_sock = -1;
+}
+
+CPacket& CClientSocket::GetPacket()
+{
+	return m_packet;
+}
+
 //接收消息
 int CClientSocket::DealCommand()
 {
 	if (m_sock == -1)return -1;
-	char* buffer = new char[BUFSIZE];
+	char* buffer = m_buffer.data();
 	memset(buffer, 0, BUFSIZE);
 	size_t index = 0;//缓冲区空闲位置指针（实际存储数据大小）
 	while (true)
@@ -107,6 +121,7 @@ bool CClientSocket::Send(const void* pData, size_t nSize)
 bool CClientSocket::Send(CPacket& pack)
 {
 	if (m_sock == -1)return false;
+	TRACE("[客户端]准备发送数据%d\r\n", pack.sCmd);
 	return send(m_sock, pack.Data(), pack.size(), 0) > 0;
 }
 

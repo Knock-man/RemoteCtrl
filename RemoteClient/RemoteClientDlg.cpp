@@ -164,10 +164,17 @@ void CRemoteClientDlg::OnBnClickedBtnTest()
 	if (!ret)
 	{
 		AfxMessageBox("网络初始化失败");
+		return;
 	}
-	else {
-		AfxMessageBox("网络初始化111111111111");
+	else
+	{
+		TRACE("[客户端]客户端连接到服务器\r\n");
 	}
-	//CPacket pack()
-	//pClient->Send(pack);
+	CPacket pack(1981, NULL, 0);
+	ret = pClient->Send(pack);
+	TRACE("Send ret=%d\r\n", ret);
+	int cmd = pClient->DealCommand();
+	TRACE("ack=%d\r\n", cmd);
+	pClient->CloseSocket();
+	
 }

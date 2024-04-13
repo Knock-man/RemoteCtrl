@@ -413,6 +413,13 @@ int UnlockMachine() {
     return 0;
 }
 
+int TestConnect()
+{
+    CPacket pack(1981, NULL, 0);
+    int ret = CServerSocket::getInstance()->Send(pack);
+    TRACE("Send ret = %d\r\n", ret);
+    return 0;
+}
 //
 int ExcuteCommand(int nCmd)
 {
@@ -443,7 +450,11 @@ int ExcuteCommand(int nCmd)
     case 8://解锁
         ret = UnlockMachine();
         break;
+    case 1981:
+        ret = TestConnect();
+        break;
     }
+   
     return ret;
 }
 int main()
@@ -482,10 +493,13 @@ int main()
                     MessageBox(NULL, TEXT("无法正常接入用户，自动重试"), TEXT("客户端连接失败"), MB_OK | MB_ICONERROR);
                     count++;
                 }
+                TRACE("接收客户端连接成功\r\n");
                 int ret = pserver->DealCommand();
-                if (ret == 0)
+                TRACE("DealCommand ret%d\r\n",ret);
+                if (ret > 0)
                 {
-                    ret = ExcuteCommand(pserver->GetPacket().sCmd);
+                    
+                    ret = ExcuteCommand(ret);
                     if (ret != 0)
                     {
                         TRACE("执行命令失败：%d ret = %d\r\n", pserver->GetPacket().sCmd, ret);
