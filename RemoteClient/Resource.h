@@ -11,11 +11,10 @@
 #define IDC_BTN_TEST                    1000
 #define IDC_EDIT_PORT                   1001
 #define IDC_IPADDRESS_SERV              1002
-#define IDC_TREE3                       1009
 #define IDC_TREE_DIR                    1009
 #define IDC_LIST_FILE                   1012
 #define IDC_BUTTON2                     1013
-#define IDC_BUTTON3                     1014
+#define IDC_BTN_FILEINFO                1013
 
 // Next default values for new objects
 // 

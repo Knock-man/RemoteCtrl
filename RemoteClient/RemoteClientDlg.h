@@ -20,6 +20,8 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+private:
+	int SendCommandPacket(int nCmd, BYTE* pData=nullptr, size_t nLength = 0);
 
 // 实现
 protected:
@@ -35,4 +37,6 @@ public:
 	afx_msg void OnBnClickedBtnTest();
 	DWORD IP_Address;
 	CString IP_PORT;
+	afx_msg void OnBnClickedBtnFileinfo();
+	CTreeCtrl m_Tree;
 };

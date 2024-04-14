@@ -64,6 +64,26 @@ void CRemoteClientDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_IPAddress(pDX, IDC_IPADDRESS_SERV, IP_Address);
 	DDX_Text(pDX, IDC_EDIT_PORT, IP_PORT);
+	DDX_Control(pDX, IDC_TREE_DIR, m_Tree);
+}
+
+int CRemoteClientDlg::SendCommandPacket(int nCmd, BYTE* pData, size_t nLength)
+{
+	UpdateData();
+	CClientSocket* pClient = CClientSocket::getInstance();
+	bool ret = pClient->InitSocket(IP_Address, atoi((LPCTSTR)IP_PORT));//TODO返回值处理
+	if (!ret)
+	{
+		AfxMessageBox("网络初始化失败");
+		return -1;
+	}
+	CPacket pack(nCmd, pData, nLength);
+	ret = pClient->Send(pack);
+	TRACE("Send ret=%d\r\n", ret);
+	int cmd = pClient->DealCommand();
+	TRACE("ack=%d\r\n", cmd);
+	pClient->CloseSocket();
+	return cmd;
 }
 
 BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
@@ -71,6 +91,7 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BTN_TEST, &CRemoteClientDlg::OnBnClickedBtnTest)
+	ON_BN_CLICKED(IDC_BTN_FILEINFO, &CRemoteClientDlg::OnBnClickedBtnFileinfo)
 END_MESSAGE_MAP()
 
 
@@ -167,23 +188,33 @@ HCURSOR CRemoteClientDlg::OnQueryDragIcon()
 
 void CRemoteClientDlg::OnBnClickedBtnTest()
 {
-	UpdateData();
-	CClientSocket* pClient = CClientSocket::getInstance();
-	bool ret = pClient->InitSocket(IP_Address,atoi((LPCTSTR)IP_PORT));//TODO返回值处理
-	if (!ret)
+	SendCommandPacket(1981);
+}
+
+
+void CRemoteClientDlg::OnBnClickedBtnFileinfo()
+{
+	int ret = SendCommandPacket(1);
+	if (ret == -1)
 	{
-		AfxMessageBox("网络初始化失败");
+		AfxMessageBox(TEXT("命令处理失败"));
 		return;
 	}
-	else
+	CClientSocket* pClient = CClientSocket::getInstance();
+	std::string drivers = pClient->GetPacket().strDate;
+	std::string dr;
+	m_Tree.DeleteAllItems();//"C,D"
+	for (size_t i = 0; i < drivers.size()+1; i++)
 	{
-		TRACE("[客户端]客户端连接到服务器\r\n");
+		if (drivers[i] == ','||i== (drivers.size()))
+		{
+			dr += ":";
+			m_Tree.InsertItem(dr.c_str(),TVI_ROOT,TVI_LAST);
+			dr.clear();
+			continue;
+		}
+		dr += drivers[i];
+		TRACE("%s\r\n", dr.c_str());
 	}
-	CPacket pack(1981, NULL, 0);
-	ret = pClient->Send(pack);
-	TRACE("Send ret=%d\r\n", ret);
-	int cmd = pClient->DealCommand();
-	TRACE("ack=%d\r\n", cmd);
-	pClient->CloseSocket();
-	
+	// TODO: 在此添加控件通知处理程序代码
 }
