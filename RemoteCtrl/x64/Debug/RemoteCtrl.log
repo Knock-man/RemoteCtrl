@@ -1,17 +1,1 @@
-﻿  pch.cpp
-  RemoteCtrl.cpp
-  ServerSocket.cpp
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(71,54): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(93,46): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(181,18): warning C4267: “=”: 从“size_t”转换到“DWORD”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(229,22): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-  正在生成代码...
-  RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\x64\Debug\RemoteCtrl.exe
+﻿

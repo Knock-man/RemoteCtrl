@@ -121,7 +121,10 @@ bool CServerSocket::Send(const void* pData, size_t nSize)
 bool CServerSocket::Send(CPacket& pack)
 {
 	if (m_clntsock == -1)return false;
-	return send(m_clntsock, pack.Data(), pack.size(), 0) > 0;
+	int ret = send(m_clntsock, pack.Data(), pack.size(), 0);
+	TRACE("[服务器]发送%d个字节\r\n", ret);
+	if (ret)return ret;
+	else return -1;
 }
 
 bool CServerSocket::GetFilePath(std::string& strPath)
@@ -250,6 +253,7 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	{
 		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
+	TRACE("[服务器] 打包校验位sSum = %d\r\n", sSum);
 }
 CPacket::CPacket(const CPacket& pack)
 {
@@ -282,6 +286,7 @@ int CPacket::size()
 	return nLength+6;
 }
 
+//将包转为字符串类型
 const char* CPacket::Data()
 {
 	strOut.resize(nLength + 6);

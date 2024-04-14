@@ -63,21 +63,7 @@ int MakeDriverInfo()
   
 }
 
-//文件信息结构体
-typedef struct file_info
-{
-    file_info()
-    {
-        IsInvalid = false;//默认为有效文件
-        IsDirectory = -1;
-        HasNext = TRUE;
-        memset(szFileName, 0, sizeof(szFileName));
-    }
-    BOOL IsInvalid;//是否有效
-    BOOL IsDirectory;//文件类型 0文件 1目录
-    BOOL HasNext;//是否还有后续 0没有 1有
-    char szFileName[256];//文件名
-}FILEINFO,*PFILEINFO;
+
 
 #include <io.h> // 包含用于文件查找的头文件
 //查询指定目录下的所有文件
@@ -96,11 +82,7 @@ int MakeDirectoryInfo()
     {
         //设置失败
         FILEINFO finfo;
-        finfo.IsInvalid = true;//无效文件
-        finfo.IsDirectory = true;//为目录
         finfo.HasNext = FALSE;//没有后续文件
-        memcpy(finfo.szFileName, strpath.c_str(), strpath.size());//文件路径
-        //lstFileInfos.push_back(finfo);
         CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
         CServerSocket::getInstance()->Send(pack);//发送
         OutputDebugString(TEXT("没有权限访问目录"));
@@ -113,10 +95,15 @@ int MakeDirectoryInfo()
     if ((hfind =_findfirst("*", &fdata)) == -1)//找工作目录中匹配的第一个文件  第一个参数使用通配符代表文件类型
     {
         OutputDebugString(TEXT("没有找到任何文件"));
+        //发送结束文件
+        FILEINFO finfo;
+        finfo.HasNext = false;//设置结束文件标记
+        CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
+        CServerSocket::getInstance()->Send(pack);//发送
         return -3;
     }
 
-    //发送有效文件给客户端
+    //挨个发送有效文件给客户端
     do
     {
         FILEINFO finfo;
@@ -124,6 +111,11 @@ int MakeDirectoryInfo()
         memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
         CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
         CServerSocket::getInstance()->Send(pack);//发送
+        TRACE("[服务器数据包：\r\n]");
+        //Dump((BYTE*)pack.Data(), pack.size());
+        
+        TRACE("[服务器]发送文件名[%s]\r\n", finfo.szFileName);
+        
         //lstFileInfos.push_back(finfo);
     } while (!_findnext(hfind, &fdata));//查找工作目录匹配的下一个文件
     
@@ -508,11 +500,6 @@ int main()
                 }
                 
             }
-            
-           
-           
-            
-
         }
     }
     else

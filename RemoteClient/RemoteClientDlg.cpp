@@ -50,6 +50,21 @@ END_MESSAGE_MAP()
 // CRemoteClientDlg 对话框
 
 
+void CRemoteClientDlg::Dump(BYTE* pData, size_t nSize)
+{
+	std::string strOut;
+	for (size_t i = 0; i < nSize; i++)
+	{
+		char buf[8] = "";
+		if (i > 0 && (i % 16 == 0))strOut += "\n";
+		snprintf(buf, sizeof(buf), "%02X ", pData[i] & 0xFF);
+		strOut += buf;
+	}
+	strOut += "\n";
+	OutputDebugStringA(strOut.c_str());
+}
+
+
 
 CRemoteClientDlg::CRemoteClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_REMOTECLIENT_DIALOG, pParent)
@@ -67,7 +82,7 @@ void CRemoteClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TREE_DIR, m_Tree);
 }
 
-int CRemoteClientDlg::SendCommandPacket(int nCmd, BYTE* pData, size_t nLength)
+int CRemoteClientDlg::SendCommandPacket(int nCmd,bool bAutoClose ,BYTE* pData, size_t nLength)
 {
 	UpdateData();
 	CClientSocket* pClient = CClientSocket::getInstance();
@@ -79,10 +94,14 @@ int CRemoteClientDlg::SendCommandPacket(int nCmd, BYTE* pData, size_t nLength)
 	}
 	CPacket pack(nCmd, pData, nLength);
 	ret = pClient->Send(pack);
-	TRACE("Send ret=%d\r\n", ret);
+	//TRACE("Send ret=%d\r\n", ret);
 	int cmd = pClient->DealCommand();
-	TRACE("ack=%d\r\n", cmd);
-	pClient->CloseSocket();
+	//TRACE("ack=%d\r\n", cmd);
+	if (bAutoClose)
+	{
+		pClient->CloseSocket();
+	}
+	
 	return cmd;
 }
 
@@ -92,6 +111,7 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BTN_TEST, &CRemoteClientDlg::OnBnClickedBtnTest)
 	ON_BN_CLICKED(IDC_BTN_FILEINFO, &CRemoteClientDlg::OnBnClickedBtnFileinfo)
+	ON_NOTIFY(NM_DBLCLK, IDC_TREE_DIR, &CRemoteClientDlg::OnNMDblclkTreeDir)
 END_MESSAGE_MAP()
 
 
@@ -209,12 +229,91 @@ void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 		if (drivers[i] == ','||i== (drivers.size()))
 		{
 			dr += ":";
-			m_Tree.InsertItem(dr.c_str(),TVI_ROOT,TVI_LAST);
+			HTREEITEM hTmp = m_Tree.InsertItem(dr.c_str(),TVI_ROOT,TVI_LAST);
+			m_Tree.InsertItem("", hTmp, TVI_LAST);//目录插入一个空项
 			dr.clear();
 			continue;
 		}
 		dr += drivers[i];
-		TRACE("%s\r\n", dr.c_str());
+		//TRACE("%s\r\n", dr.c_str());
 	}
 	// TODO: 在此添加控件通知处理程序代码
+}
+
+//获得hTree节点 完整路径信息 D:\C\xbj\shixi
+CString CRemoteClientDlg::Getpath(HTREEITEM hTree)
+{
+	CString strRet, strTmp;
+	do{
+		strTmp = m_Tree.GetItemText(hTree);//获得树节点当前的文本
+		strRet  = strTmp + '\\' + strRet;//拼接
+		hTree = m_Tree.GetParentItem(hTree);//得到父节点句柄
+	} while (hTree != NULL);//找到了根节点
+	return strRet;
+}
+
+//删除当前节点的所有孩子节点
+void CRemoteClientDlg::DeleteTreeChildrenItem(HTREEITEM hTree)
+{
+	HTREEITEM hSub = NULL;
+	do {
+		hSub = m_Tree.GetChildItem(hTree);
+		if (hSub != NULL)m_Tree.DeleteItem(hSub);
+	} while (hSub != NULL);
+}
+void CRemoteClientDlg::OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	// TODO: 在此添加控件通知处理程序代码
+	*pResult = 0;
+	CPoint ptMouse;//鼠标指针
+	GetCursorPos(&ptMouse);//获取鼠标指针坐标
+	m_Tree.ScreenToClient(&ptMouse);//转为树控件中的坐标
+
+	//获得鼠标点击坐标对应的树节点句柄
+	HTREEITEM hTreeSelected = m_Tree.HitTest(ptMouse, 0);
+	if (hTreeSelected == NULL)return;
+	if (m_Tree.GetChildItem(hTreeSelected) == NULL)return;//没有子节点是文件，没有子目录
+
+	//先删除孩子节点防止重复点击
+	DeleteTreeChildrenItem(hTreeSelected);
+	
+	//获得完整的路径信息 D:\C\xbj\shixi
+	CString strPath = Getpath(hTreeSelected);
+
+	TRACE("发送路径:[%s]",strPath);
+	//路径信息发送给服务器
+	//问题
+	int nCmd = SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
+
+	//接收文件信息 PFILEINFO为文件结构体
+	CClientSocket* pClient = CClientSocket::getInstance();
+	PFILEINFO pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
+	
+	while (pInfo->HasNext) {
+		TRACE("[%s] isdir %d\r\n", pInfo->szFileName, pInfo->IsDirectory);
+		if (pInfo->IsDirectory)//是目录
+		{
+			if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
+			{//防止死递归，继续接收下一个文件
+				int cmd = pClient->DealCommand();
+				TRACE("ack:%d/r/n", cmd);
+				if (cmd < 0)break;
+				pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
+				continue;
+			}
+		}
+		HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);
+		if (pInfo->IsDirectory)
+		{
+			m_Tree.InsertItem("", hTemp, TVI_LAST);
+		}
+		int cmd = pClient->DealCommand();
+		TRACE("ack:%d/r/n", cmd);
+		if (cmd < 0)break;
+		pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
+	} ;
+
+	pClient->CloseSocket();
+	
+
 }

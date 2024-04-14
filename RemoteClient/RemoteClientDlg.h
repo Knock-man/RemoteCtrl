@@ -21,7 +21,11 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
 private:
-	int SendCommandPacket(int nCmd, BYTE* pData=nullptr, size_t nLength = 0);
+	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=nullptr, size_t nLength=0);
+	CString Getpath(HTREEITEM hTree);
+	void DeleteTreeChildrenItem(HTREEITEM hTree);
+	void Dump(BYTE* pData, size_t nSize);
+
 
 // 实现
 protected:
@@ -39,4 +43,5 @@ public:
 	CString IP_PORT;
 	afx_msg void OnBnClickedBtnFileinfo();
 	CTreeCtrl m_Tree;
+	afx_msg void OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult);
 };

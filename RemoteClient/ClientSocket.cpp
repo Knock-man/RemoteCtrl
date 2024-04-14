@@ -10,7 +10,7 @@ CClientSocket::CClientSocket() {
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
 		exit(0);
 	}
-	m_buffer.resize(BUFSIZE);
+	m_buffer.resize(BUFSIZE,0);
 	//m_sock = socket(AF_INET, SOCK_STREAM, 0);
 };
 
@@ -89,11 +89,12 @@ int CClientSocket::DealCommand()
 {
 	if (m_sock == -1)return -1;
 	char* buffer = m_buffer.data();
-	memset(buffer, 0, BUFSIZE);
-	size_t index = 0;//缓冲区空闲位置指针（实际存储数据大小）
+	//memset(buffer, 0, BUFSIZE);
+	static size_t index = 0;//缓冲区空闲位置指针（实际存储数据大小）
 	while (true)
 	{
 		size_t len = recv(m_sock, buffer + index, BUFSIZE - index, 0);
+		//TRACE("[客户端]buff=%s\r\n", buffer);
 		if (len < 0)
 		{
 			return -1;
@@ -121,7 +122,7 @@ bool CClientSocket::Send(const void* pData, size_t nSize)
 bool CClientSocket::Send(CPacket& pack)
 {
 	if (m_sock == -1)return false;
-	TRACE("[客户端]准备发送数据%d\r\n", pack.sCmd);
+	//TRACE("[客户端]准备发送数据%d\r\n", pack.sCmd);
 	return send(m_sock, pack.Data(), pack.size(), 0) > 0;
 }
 
@@ -164,10 +165,9 @@ CPacket::CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0)
 {
 
 }
-//解包：解析包
+//解析包
 CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
-
 	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
 	size_t i = 0;
 	//取包头位
@@ -176,11 +176,10 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 		if (*(WORD*)(pData + i) == 0xFEFF)//找到包头
 		{
 			sHead = *(WORD*)(pData + i);
-			//i++;//偏移到包头末尾
 			break;
 		}
 	}
-
+	
 	if ((i + 2 + 4 + 2 + 2) > nSize)//包数据不全 只有 [包头 包长度 控制命令 和校验]  没有数据段 解析失败
 	{
 		nSize = 0;
@@ -208,12 +207,12 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 
 	//取出校验位 并校验
 	sSum = *(pData + i + 2 + 4 + 2 + dataLength);
-
 	WORD sum = 0;
-	for (int j = 0; j < strDate.size(); j++)
+	for (int j = 0; j < dataLength; j++)
 	{
 		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
+	TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strDate.c_str(), sSum, sum);
 	if (sum == sSum)
 	{
 		nSize = nLength + 2 + 4;
