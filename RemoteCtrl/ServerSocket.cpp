@@ -71,7 +71,7 @@ bool CServerSocket::AcceptClient()
 //接收消息
 int CServerSocket::DealCommand()
 {
-	TRACE("开始等待客户端数据\r\n");
+	// TRACE("开始等待客户端数据\r\n");
 	if (m_clntsock == -1)return -1;
 	char* buffer = new char[BUFSIZE];
 	if (buffer == NULL)
@@ -84,7 +84,7 @@ int CServerSocket::DealCommand()
 	while (true)
 	{
 		size_t len = recv(m_clntsock, buffer+index, BUFSIZE-index, 0);
-		TRACE("recv %d\r\n", len);
+		//TRACE("[客户端]接收 %d 字节\r\n", len);
 		if (len < 0)
 		{
 			delete[] buffer;
@@ -122,7 +122,7 @@ bool CServerSocket::Send(CPacket& pack)
 {
 	if (m_clntsock == -1)return false;
 	int ret = send(m_clntsock, pack.Data(), pack.size(), 0);
-	TRACE("[服务器]发送%d个字节\r\n", ret);
+	//TRACE("[服务器]发送%d个字节\r\n", ret);
 	if (ret)return ret;
 	else return -1;
 }
@@ -249,11 +249,11 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	
 	//打包检验位
 	sSum = 0;
-	for (int j = 0; j < strDate.size(); j++)
+	for (size_t j = 0; j < strDate.size(); j++)
 	{
 		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
-	TRACE("[服务器] 打包校验位sSum = %d\r\n", sSum);
+	//TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strDate.c_str(), sSum);
 }
 CPacket::CPacket(const CPacket& pack)
 {

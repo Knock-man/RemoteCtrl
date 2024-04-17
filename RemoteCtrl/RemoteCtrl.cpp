@@ -57,7 +57,7 @@ int MakeDriverInfo()
     }
 
     CPacket pack(1,(BYTE*)result.c_str(), result.size());
-    //Dump((BYTE*)pack.Data(), pack.size());
+    Dump((BYTE*)pack.Data(), pack.size());
     CServerSocket::getInstance()->Send(pack);
     return 0;
   
@@ -102,7 +102,7 @@ int MakeDirectoryInfo()
         CServerSocket::getInstance()->Send(pack);//发送
         return -3;
     }
-
+    int Count = 0;
     //挨个发送有效文件给客户端
     do
     {
@@ -111,10 +111,11 @@ int MakeDirectoryInfo()
         memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
         CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
         CServerSocket::getInstance()->Send(pack);//发送
-        TRACE("[服务器数据包：\r\n]");
+        Count++;
+        //TRACE("[服务器数据包：\r\n]");
         //Dump((BYTE*)pack.Data(), pack.size());
         
-        TRACE("[服务器]发送文件名[%s]\r\n", finfo.szFileName);
+        //TRACE("[服务器]发送文件名[%s]\r\n", finfo.szFileName);
         
         //lstFileInfos.push_back(finfo);
     } while (!_findnext(hfind, &fdata));//查找工作目录匹配的下一个文件
@@ -124,6 +125,7 @@ int MakeDirectoryInfo()
     finfo.HasNext = false;//设置结束文件标记
     CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
     CServerSocket::getInstance()->Send(pack);//发送
+    TRACE("Count=%d\r\n", Count);
     return 0;
 }
 
@@ -487,7 +489,7 @@ int main()
                 }
                 TRACE("接收客户端连接成功\r\n");
                 int ret = pserver->DealCommand();
-                TRACE("DealCommand ret%d\r\n",ret);
+                //TRACE("DealCommand ret%d\r\n",ret);
                 if (ret > 0)
                 {
                     

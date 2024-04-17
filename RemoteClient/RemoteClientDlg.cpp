@@ -280,7 +280,7 @@ void CRemoteClientDlg::OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult)
 	//获得完整的路径信息 D:\C\xbj\shixi
 	CString strPath = Getpath(hTreeSelected);
 
-	TRACE("发送路径:[%s]",strPath);
+	//TRACE("发送路径:[%s]",strPath);
 	//路径信息发送给服务器
 	//问题
 	int nCmd = SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
@@ -288,30 +288,32 @@ void CRemoteClientDlg::OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult)
 	//接收文件信息 PFILEINFO为文件结构体
 	CClientSocket* pClient = CClientSocket::getInstance();
 	PFILEINFO pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
-	
+	int cout = 0;
 	while (pInfo->HasNext) {
-		TRACE("[%s] isdir %d\r\n", pInfo->szFileName, pInfo->IsDirectory);
+		//TRACE("[%s] isdir %d\r\n", pInfo->szFileName, pInfo->IsDirectory);
 		if (pInfo->IsDirectory)//是目录
 		{
 			if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
 			{//防止死递归，继续接收下一个文件
 				int cmd = pClient->DealCommand();
-				TRACE("ack:%d/r/n", cmd);
+				//TRACE("ack:%d/r/n", cmd);
 				if (cmd < 0)break;
 				pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
 				continue;
 			}
 		}
-		HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);
+		HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);//插入树中
 		if (pInfo->IsDirectory)
 		{
 			m_Tree.InsertItem("", hTemp, TVI_LAST);
 		}
 		int cmd = pClient->DealCommand();
-		TRACE("ack:%d/r/n", cmd);
+		cout++;
+		//TRACE("ack:%d/r/n", cmd);
 		if (cmd < 0)break;
 		pInfo = (PFILEINFO)pClient->GetPacket().strDate.c_str();
 	} ;
+	TRACE("cout= %d\r\n", cout);
 
 	pClient->CloseSocket();
 	
