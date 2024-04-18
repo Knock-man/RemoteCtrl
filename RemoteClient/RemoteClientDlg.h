@@ -26,6 +26,7 @@ private:
 	void DeleteTreeChildrenItem(HTREEITEM hTree);
 	void Dump(BYTE* pData, size_t nSize);
 	void LoadFileInfo();
+	void LoadFileCurrent();
 
 
 // 实现

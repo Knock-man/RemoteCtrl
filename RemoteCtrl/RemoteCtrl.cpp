@@ -185,6 +185,22 @@ int DownloadFile()
     CServerSocket::getInstance()->Send(pack);
     
 }
+
+int DeleteLocalFile()
+{
+    //TODO:
+    std::string strPath;
+    CServerSocket::getInstance()->GetFilePath(strPath);
+    //TCHAR sPath[MAX_PATH] = TEXT("");
+    //MultiByteToWideChar(CP_ACP, 0, strPath.c_str(),
+    //    strPath.size(),(LPWSTR)sPath, sizeof(sPath) / sizeof(TCHAR));
+    DeleteFileA(strPath.c_str());
+
+    //发送结束标记
+    CPacket pack(9, NULL, 0);
+    CServerSocket::getInstance()->Send(pack);
+    return 0;
+}
 //鼠标事件
 int MouseEvent()
 {
@@ -446,6 +462,9 @@ int ExcuteCommand(int nCmd)
         break;
     case 8://解锁
         ret = UnlockMachine();
+        break;
+    case 9://删除文件
+        ret = DeleteLocalFile();
         break;
     case 1981:
         ret = TestConnect();
