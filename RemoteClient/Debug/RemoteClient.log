@@ -1,2 +1,5 @@
 ﻿  RemoteClientDlg.cpp
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(531,2): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe

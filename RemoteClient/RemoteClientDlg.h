@@ -3,7 +3,9 @@
 //
 
 #pragma once
-
+#include"StatusDlg.h"
+#include "ClientSocket.h"
+#define WM_SEND_PACKET (WM_USER+1) //发送数据包消息
 
 // CRemoteClientDlg 对话框
 class CRemoteClientDlg : public CDialogEx
@@ -27,12 +29,14 @@ private:
 	void Dump(BYTE* pData, size_t nSize);
 	void LoadFileInfo();
 	void LoadFileCurrent();
+	static void threadEntryForDownFile(void* arg);
+	void threadDownFile();
 
 
 // 实现
 protected:
 	HICON m_hIcon;
-
+	CStatusDlg m_dlgStatus;
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -53,4 +57,5 @@ public:
 	afx_msg void OnDeleteFile();
 	afx_msg void OnRunfile();
 	afx_msg void OnDownloadFile();
+	afx_msg LRESULT OnSendPacket(WPARAM wParam, LPARAM lParam);
 };

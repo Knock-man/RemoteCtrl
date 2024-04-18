@@ -189,6 +189,7 @@
     <ClInclude Include="RemoteClient.h" />
     <ClInclude Include="RemoteClientDlg.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="StatusDlg.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +202,7 @@
     </ClCompile>
     <ClCompile Include="RemoteClient.cpp" />
     <ClCompile Include="RemoteClientDlg.cpp" />
+    <ClCompile Include="StatusDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RemoteClient.rc" />
