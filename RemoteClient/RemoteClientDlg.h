@@ -25,6 +25,7 @@ private:
 	CString Getpath(HTREEITEM hTree);
 	void DeleteTreeChildrenItem(HTREEITEM hTree);
 	void Dump(BYTE* pData, size_t nSize);
+	void LoadFileInfo();
 
 
 // 实现
@@ -44,4 +45,8 @@ public:
 	afx_msg void OnBnClickedBtnFileinfo();
 	CTreeCtrl m_Tree;
 	afx_msg void OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMClickTreeDir(NMHDR* pNMHDR, LRESULT* pResult);
+	// 显示文件
+	CListCtrl m_List;
+	afx_msg void OnNMRClickListFile(NMHDR* pNMHDR, LRESULT* pResult);
 };

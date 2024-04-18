@@ -57,7 +57,7 @@ int MakeDriverInfo()
     }
 
     CPacket pack(1,(BYTE*)result.c_str(), result.size());
-    Dump((BYTE*)pack.Data(), pack.size());
+    //Dump((BYTE*)pack.Data(), pack.size());
     CServerSocket::getInstance()->Send(pack);
     return 0;
   
@@ -76,7 +76,6 @@ int MakeDirectoryInfo()
         OutputDebugString(TEXT("当前的命令，不是获取文件目录列表，命令解析错误!!"));
         return -1;
     }
-
     //设置为当前工作目录
     if (!SetCurrentDirectoryA(strpath.c_str()))
     {
@@ -100,6 +99,7 @@ int MakeDirectoryInfo()
         finfo.HasNext = false;//设置结束文件标记
         CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
         CServerSocket::getInstance()->Send(pack);//发送
+       
         return -3;
     }
     int Count = 0;
@@ -111,6 +111,7 @@ int MakeDirectoryInfo()
         memcpy(finfo.szFileName, fdata.name, strlen(fdata.name));
         CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
         CServerSocket::getInstance()->Send(pack);//发送
+        //TRACE("[服务器]发送文件=%s\r\n", finfo.szFileName);
         Count++;
         //TRACE("[服务器数据包：\r\n]");
         //Dump((BYTE*)pack.Data(), pack.size());
@@ -125,6 +126,7 @@ int MakeDirectoryInfo()
     finfo.HasNext = false;//设置结束文件标记
     CPacket pack(2, (BYTE*)&finfo, sizeof(finfo));//打包
     CServerSocket::getInstance()->Send(pack);//发送
+    
     TRACE("Count=%d\r\n", Count);
     return 0;
 }

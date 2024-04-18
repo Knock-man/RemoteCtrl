@@ -1,6 +1,7 @@
 #pragma once
 #include"framework.h"
 #include"pch.h"
+#include<vector>
 
 #define BUFSIZE 4096
 #define PORT 9527
@@ -100,6 +101,8 @@ private:
 
 	//数据包
 	CPacket m_packet;
+
+	std::vector<char> m_buffer;
 
 	//构造
 	CServerSocket();

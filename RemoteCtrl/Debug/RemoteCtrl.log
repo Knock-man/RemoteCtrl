@@ -1,14 +1,3 @@
 ﻿  RemoteCtrl.cpp
-  ServerSocket.cpp
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(127,15): warning C4305: “return”: 从“int”到“bool”截断
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(220,20): warning C4018: “<”: 有符号/无符号不匹配
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(295,22): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-  正在生成代码...
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\RemoteCtrl.cpp(184,1): warning C4715: “DownloadFile”: 不是所有的控件路径都返回值
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\RemoteCtrl.cpp(186,1): warning C4715: “DownloadFile”: 不是所有的控件路径都返回值
   RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteCtrl.exe
