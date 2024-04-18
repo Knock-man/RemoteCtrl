@@ -27,6 +27,7 @@ public:
 // 实现
 
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnDownloadFile();
 };
 
 extern CRemoteClientApp theApp;

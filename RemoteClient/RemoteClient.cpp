@@ -17,6 +17,7 @@
 
 BEGIN_MESSAGE_MAP(CRemoteClientApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+	ON_COMMAND(ID_DOWNLOAD_FILE, &CRemoteClientApp::OnDownloadFile)
 END_MESSAGE_MAP()
 
 
@@ -106,3 +107,9 @@ BOOL CRemoteClientApp::InitInstance()
 	return FALSE;
 }
 
+
+
+void CRemoteClientApp::OnDownloadFile()
+{
+	// TODO: 在此添加命令处理程序代码
+}
