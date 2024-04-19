@@ -12,6 +12,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+#include "CWatchDialog.h"
 
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
@@ -120,6 +121,8 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_COMMAND(ID_RUNFILE, &CRemoteClientDlg::OnRunfile)
 	ON_COMMAND(ID_DOWNLOAD_FILE, &CRemoteClientDlg::OnDownloadFile)
 	ON_MESSAGE(WM_SEND_PACKET, &CRemoteClientDlg::OnSendPacket)
+	ON_BN_CLICKED(IDC_BTN_START_WATCH, &CRemoteClientDlg::OnBnClickedBtnStartWatch)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -560,10 +563,29 @@ void CRemoteClientDlg::threadWatchData()
 				int cmd = pClient->DealCommand();
 				if (cmd == 6)
 				{
-					if (m_isFull == false)
+					if (m_isFull == false)//更新数据到缓存
 					{
 						BYTE* pData = (BYTE*)pClient->GetPacket().strDate.c_str();
-						//TODO:存入CImage
+						HGLOBAL hMen = GlobalAlloc(GMEM_MOVEABLE, 0);
+						if (hMen == NULL)
+						{
+							TRACE("内存不足了！");
+							Sleep(1);
+							continue;
+						}
+						IStream* pStream = NULL;
+						HRESULT hRet = CreateStreamOnHGlobal(hMen, TRUE, &pStream);
+						if (hRet == S_OK)
+						{
+							ULONG length = 0;
+							pStream->Write(pData, pClient->GetPacket().strDate.size(), &length);
+							LARGE_INTEGER bg = {0};
+							pStream->Seek(bg, STREAM_SEEK_SET, NULL);
+							m_image.Load(pStream);
+							m_isFull = true;
+
+						}
+						m_image;
 						m_isFull == true;
 					}
 					
@@ -598,3 +620,20 @@ LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 	return ret;
 }
 	
+
+
+void CRemoteClientDlg::OnBnClickedBtnStartWatch()
+{
+	_beginthread(CRemoteClientDlg::threadEntryForWatch, 0, this);
+	CWatchDialog dlg(this);
+	dlg.DoModal();
+
+}
+
+
+void CRemoteClientDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+
+	CDialogEx::OnTimer(nIDEvent);
+}
