@@ -178,11 +178,11 @@ int DownloadFile()
             CServerSocket::getInstance()->Send(pack);
         } while (rlen >= 1024);
         fclose(pFile);
-        return 0;
     }
     //发送结束标记
     CPacket pack(4, NULL, 0);
     CServerSocket::getInstance()->Send(pack);
+    return 0;
     
 }
 

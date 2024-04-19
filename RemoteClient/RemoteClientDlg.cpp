@@ -161,6 +161,7 @@ BOOL CRemoteClientDlg::OnInitDialog()
 	UpdateData(FALSE);
 	m_dlgStatus.Create(IDD_DLG_STATUS,this);//创建对话框
 	m_dlgStatus.ShowWindow(SW_HIDE);//隐藏
+	m_isFull = false;
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -492,6 +493,7 @@ void CRemoteClientDlg::threadDownFile()
 					TRACE("执行下载失败:ret=%d\r\n", ret);
 					break;
 				}
+			}
 
 				long long  nlength = *(long long*)pClient->GetPacket().strDate.c_str();//待下载文件长度
 				if (nlength == 0)
@@ -514,7 +516,7 @@ void CRemoteClientDlg::threadDownFile()
 					fwrite(pClient->GetPacket().strDate.c_str(), 1, pClient->GetPacket().strDate.size(), pFile);
 					nCount += pClient->GetPacket().strDate.size();
 				}
-			}
+			
 		} while (false);
 
 		fclose(pFile);
@@ -524,11 +526,57 @@ void CRemoteClientDlg::threadDownFile()
 		MessageBox(TEXT("下载完成!!"), TEXT("完成"));
 	}
 }
+
+//线程函数
 void CRemoteClientDlg::threadEntryForDownFile(void* arg)
 {
 	CRemoteClientDlg* thiz = (CRemoteClientDlg*)arg;
 	thiz->threadDownFile();
 	_endthread;
+}
+
+//线程函数
+void CRemoteClientDlg::threadEntryForWatch(void* arg)
+{
+	CRemoteClientDlg* thiz = (CRemoteClientDlg*)arg;
+	thiz->threadWatchData();
+	_endthread;
+}
+void CRemoteClientDlg::threadWatchData()
+{
+	CClientSocket* pClient = NULL;
+	do {
+		CClientSocket* pClient = CClientSocket::getInstance();
+	} while (pClient == NULL);
+	for (;;)
+	{
+		int cmd = pClient->DealCommand();
+		if (cmd == 6)
+		{
+			CPacket pack(6, NULL, 0);
+			bool ret = pClient->Send(pack);
+			if (ret)
+			{
+				int cmd = pClient->DealCommand();
+				if (cmd == 6)
+				{
+					if (m_isFull == false)
+					{
+						BYTE* pData = (BYTE*)pClient->GetPacket().strDate.c_str();
+						//TODO:存入CImage
+						m_isFull == true;
+					}
+					
+				}
+			}
+			else
+			{
+				Sleep(1);
+			}
+			
+		}
+	}
+	
 }
 void CRemoteClientDlg::OnDownloadFile()
 {
@@ -539,14 +587,14 @@ void CRemoteClientDlg::OnDownloadFile()
 	m_dlgStatus.ShowWindow(SW_SHOW);
 	m_dlgStatus.CenterWindow(this);
 	m_dlgStatus.SetActiveWindow();
-	Sleep(50);
+	//Sleep(50);
 }
 
 LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 {
 	CString strFile = (LPCSTR)lParam;
 	//wParam共32个bit  前31个bit存储cmd 最后一个比特存储true/false
-	int ret = SendCommandPacket(wParam>>1, wParam|1, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
+	int ret = SendCommandPacket(wParam>>1, wParam&1, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
 	return ret;
 }
 	

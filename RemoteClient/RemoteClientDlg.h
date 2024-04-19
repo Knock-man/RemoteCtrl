@@ -22,6 +22,10 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
+
+private:
+	CImage m_image;//缓存
+	bool m_isFull;//缓存是否有数据 true表示有缓存数据 false表示没有缓存数据
 private:
 	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=nullptr, size_t nLength=0);
 	CString Getpath(HTREEITEM hTree);
@@ -29,8 +33,12 @@ private:
 	void Dump(BYTE* pData, size_t nSize);
 	void LoadFileInfo();
 	void LoadFileCurrent();
-	static void threadEntryForDownFile(void* arg);
 	void threadDownFile();
+
+	//线程函数
+	static void threadEntryForDownFile(void* arg);
+	static void threadEntryForWatch(void*);
+	void threadWatchData();
 
 
 // 实现

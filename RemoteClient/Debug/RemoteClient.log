@@ -1,5 +1,11 @@
 ﻿  RemoteClientDlg.cpp
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(531,2): warning C4551: 缺少参数列表的函数调用
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(535,2): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(543,2): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
+C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(567,16): warning C4553: “==”: 未使用表达式结果；是否打算使用“=”?
   (编译源文件“/RemoteClientDlg.cpp”)
   
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe
