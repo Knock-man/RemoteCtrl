@@ -213,7 +213,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 	{
 		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
-	//TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strDate.c_str(), sSum, sum);
+	TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strDate.c_str(), sSum, sum);
 	if (sum == sSum)
 	{
 		nSize =i;

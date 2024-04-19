@@ -245,7 +245,7 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	{
 		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
 	}
-	//TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strDate.c_str(), sSum);
+	TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strDate.c_str(), sSum);
 }
 CPacket::CPacket(const CPacket& pack)
 {
