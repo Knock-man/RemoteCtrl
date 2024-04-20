@@ -635,7 +635,7 @@ LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 
 void CRemoteClientDlg::OnBnClickedBtnStartWatch()
 {
-	CWatchDialog dlg(this);//显示对话框
+	CWatchDialog dlg(this);//显示对话框 传入父对象
 	_beginthread(CRemoteClientDlg::threadEntryForWatch, 0, this);
 	dlg.DoModal();
 

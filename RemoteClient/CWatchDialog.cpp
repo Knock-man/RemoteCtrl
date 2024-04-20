@@ -31,11 +31,34 @@ void CWatchDialog::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CWatchDialog, CDialog)
 	ON_WM_TIMER()
+	ON_WM_LBUTTONDBLCLK()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONDBLCLK()
+	ON_WM_RBUTTONDOWN()
+	ON_WM_RBUTTONUP()
+	ON_WM_MOUSEMOVE()
+	ON_STN_CLICKED(IDC_WATCH, &CWatchDialog::OnStnClickedWatch)
 END_MESSAGE_MAP()
 
 
 // CWatchDialog 消息处理程序
 
+
+CPoint CWatchDialog::UserPointToRemoteScreenPoint(CPoint& point)
+{
+	CRect clientRect;
+	ScreenToClient(&point);
+	m_picture.GetWindowRect(clientRect);//全局区坐标到客户区域坐标
+	//本地坐标，到远程坐标
+	int width0 = clientRect.Width();//客户区宽
+	int height0 = clientRect.Height();//客户区高
+	int width = 1920, height = 1080;//远程区宽高
+	int x = point.x * width / width0;//客户区鼠标x对应远程区鼠标位置
+	int y = point.y * height / height0;//客户区鼠标y对应远程区鼠标位置
+
+	return CPoint(x,y);
+}
 
 BOOL CWatchDialog::OnInitDialog()
 {
@@ -67,4 +90,145 @@ void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 		}
 	}
 	CDialog::OnTimer(nIDEvent);
+}
+/*
+typedef struct MouseEvent
+{
+	MouseEvent()
+	{
+		nAction = 0;
+		nButton = -1;
+		ptXY.x = 0;
+		ptXY.y = 0;
+	}
+	WORD nAction;//点击、移动、双击
+	WORD nButton;//左键、右键、滚轮
+	POINT ptXY;//坐标
+}MOUSEEV, * PMOUSEEV;
+
+*/
+void CWatchDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
+{
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;//左键
+	event.nAction = 2;//双击
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
+	CDialog::OnLButtonDblClk(nFlags, point);
+}
+
+//左键按下
+void CWatchDialog::OnLButtonDown(UINT nFlags, CPoint point)
+{
+
+	
+
+	CDialog::OnLButtonDown(nFlags, point);
+}
+
+//左键弹起
+void CWatchDialog::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	
+	//// 坐标转换
+	//CPoint remote = UserPointToRemoteScreenPoint(point);
+	////封装
+	//MOUSEEV event;
+	//event.ptXY = remote;
+	//event.nButton = 0;//左键
+	//event.nAction = 4;//双击
+	//CClientSocket* pClient = CClientSocket::getInstance();
+	//CPacket pack(5, (BYTE*)&event, sizeof(event));
+	//pClient->Send(pack);
+	CDialog::OnLButtonUp(nFlags, point);
+}
+
+
+void CWatchDialog::OnRButtonDblClk(UINT nFlags, CPoint point)
+{
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 2;//右键
+	event.nAction = 2;//双击
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
+
+	CDialog::OnRButtonDblClk(nFlags, point);
+}
+
+
+void CWatchDialog::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;//右键
+	event.nAction = 3;//按下 //服务端要做对应修改
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
+
+	CDialog::OnRButtonDown(nFlags, point);
+}
+
+
+void CWatchDialog::OnRButtonUp(UINT nFlags, CPoint point)
+{
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;//右键
+	event.nAction = 4;//弹起
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
+
+	CDialog::OnRButtonUp(nFlags, point);
+}
+
+
+void CWatchDialog::OnMouseMove(UINT nFlags, CPoint point)
+{
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;
+	event.nAction = 1;//移动
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
+
+	CDialog::OnMouseMove(nFlags, point);
+}
+
+
+void CWatchDialog::OnStnClickedWatch()
+{
+	CPoint point;
+	GetCursorPos(&point);
+	//坐标转换
+	CPoint remote = UserPointToRemoteScreenPoint(point);
+	//封装
+	MOUSEEV event;
+	event.ptXY = remote;
+	event.nButton = 0;
+	event.nAction = 3;
+	CClientSocket* pClient = CClientSocket::getInstance();
+	CPacket pack(5, (BYTE*)&event, sizeof(event));
+	pClient->Send(pack);
 }
