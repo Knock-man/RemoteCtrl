@@ -547,7 +547,7 @@ void CRemoteClientDlg::threadEntryForWatch(void* arg)
 }
 void CRemoteClientDlg::threadWatchData()
 {
-	//Sleep(50);
+	Sleep(50);
 	CClientSocket* pClient = NULL;
 	do {
 		pClient = CClientSocket::getInstance();
@@ -555,45 +555,45 @@ void CRemoteClientDlg::threadWatchData()
 	ULONGLONG tick = GetTickCount64();
 	for (;;)
 	{
-		if (GetTickCount64() - tick < 150)//增加间隔
+		if (m_isFull == false)//更新数据到缓存
 		{
-			Sleep(GetTickCount64() - tick);
-		}
-		
 			int ret = SendMessage(WM_SEND_PACKET, 6 << 1 | 1);
-			if (ret==6)
+			if (ret == 6)
 			{
-					if (m_isFull == false)//更新数据到缓存
-					{
-						BYTE* pData = (BYTE*)pClient->GetPacket().strDate.c_str();
-						HGLOBAL hMen = GlobalAlloc(GMEM_MOVEABLE, 0);
-						if (hMen == NULL)
-						{
-							TRACE("内存不足了！");
-							Sleep(1);
-							continue;
-						}
-						IStream* pStream = NULL;
-						HRESULT hRet = CreateStreamOnHGlobal(hMen, TRUE, &pStream);
-						if (hRet == S_OK)
-						{
-							ULONG length = 0;
-							pStream->Write(pData, pClient->GetPacket().strDate.size(), &length);
-							LARGE_INTEGER bg = {0};
-							pStream->Seek(bg, STREAM_SEEK_SET, NULL);
-							m_image.Load(pStream);
-							m_isFull = true;
-						}
-					}
+
+				BYTE* pData = (BYTE*)pClient->GetPacket().strDate.c_str();
+				HGLOBAL hMen = GlobalAlloc(GMEM_MOVEABLE, 0);
+				if (hMen == NULL)
+				{
+					TRACE("内存不足了！");
+					Sleep(1);
+					continue;
+				}
+				IStream* pStream = NULL;
+				HRESULT hRet = CreateStreamOnHGlobal(hMen, TRUE, &pStream);
+				if (hRet == S_OK)
+				{
+					ULONG length = 0;
+					pStream->Write(pData, pClient->GetPacket().strDate.size(), &length);
+					LARGE_INTEGER bg = { 0 };
+					pStream->Seek(bg, STREAM_SEEK_SET, NULL);
+					m_image.Load(pStream);
+					m_isFull = true;
+				}
+
 			}
 			else
 			{
 				Sleep(1);
 			}
-			
-		
+		}
+		else
+		{
+			Sleep(1);
+		}
+
 	}
-	
+
 }
 void CRemoteClientDlg::OnDownloadFile()
 {

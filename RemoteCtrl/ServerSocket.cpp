@@ -115,7 +115,7 @@ bool CServerSocket::Send(CPacket& pack)
 {
 	if (m_clntsock == -1)return false;
 	int ret = send(m_clntsock, pack.Data(), pack.size(), 0);
-	//TRACE("[服务器]发送%d个字节\r\n", ret);
+	TRACE("[服务器]发送%d个字节\r\n", ret);
 	if (ret)return ret;
 	else return -1;
 }
@@ -284,7 +284,7 @@ const char* CPacket::Data()
 	strOut.resize(nLength + 6);
 	BYTE* pData = (BYTE*)strOut.c_str();
 	*(WORD*)pData = sHead;
-	*(WORD*)(pData+2) = nLength;
+	*(DWORD*)(pData+2) = nLength;
 	*(WORD*)(pData + 2 +4) = sCmd;
 	memcpy(pData + 2 + 4 + 2, strDate.c_str(), strDate.size());
 	*(WORD*)(pData + 2 + 4+2+ strDate.size()) = sSum;

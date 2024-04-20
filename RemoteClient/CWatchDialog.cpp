@@ -42,7 +42,7 @@ BOOL CWatchDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	SetTimer(0, 50, NULL);
+	SetTimer(0, 45, NULL);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
@@ -56,7 +56,11 @@ void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 		CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
 		if (pParent->isFull())
 		{
-			pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
+			CRect rect;
+			m_picture.GetWindowRect(rect);
+			//pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
+			pParent->GetImage().StretchBlt(
+				m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
 			m_picture.InvalidateRect(NULL);
 			pParent->GetImage().Destroy();
 			pParent->SetImageSatus(false);

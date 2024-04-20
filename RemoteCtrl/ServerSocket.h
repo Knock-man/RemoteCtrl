@@ -3,7 +3,7 @@
 #include"pch.h"
 #include<vector>
 
-#define BUFSIZE 4096
+#define BUFSIZE 409600
 #define PORT 9527
 
 #pragma pack(push)
