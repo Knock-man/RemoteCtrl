@@ -607,20 +607,26 @@ void CRemoteClientDlg::OnDownloadFile()
 	//Sleep(50);
 }
 
+//wParam:控制命令，长短连接
 LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 {
 	int ret = 0;
 	int cmd = wParam >> 1;
 	switch (cmd)
 	{
-	case 4:
+	case 4://接收文件操作
 	{
 		CString strFile = (LPCSTR)lParam;
 		//wParam共32个bit  前31个bit存储cmd 最后一个比特存储true/false
 		ret = SendCommandPacket(cmd, wParam & 1, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
 		break;
 	}
-	case 6:
+	case 5://鼠标操作
+	{
+		ret = SendCommandPacket(cmd, wParam & 1, (BYTE*)(LPCSTR)lParam, sizeof(MOUSEEV));
+		break;
+	}
+	case 6://接收屏幕数据操作
 	{
 		ret = SendCommandPacket(cmd, wParam & 1);
 		break;

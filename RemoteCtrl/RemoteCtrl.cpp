@@ -207,7 +207,7 @@ int MouseEvent()
     MOUSEEV mouse;
     if (CServerSocket::getInstance()->GetMouseEvent(mouse))
     {
-        SetCursorPos(mouse.ptXY.x, mouse.ptXY.y);
+        SetCursorPos(mouse.ptXY.x, mouse.ptXY.y);//鼠标移动到屏幕对应位置
         DWORD nFlags = 0;
         switch (mouse.nButton)
         {
