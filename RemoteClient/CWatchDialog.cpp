@@ -60,7 +60,7 @@ CPoint CWatchDialog::UserPointToRemoteScreenPoint(CPoint& point,bool isScreen)
 	int height0 = clientRect.Height();//客户区高
 	int width = m_nObjWidth, height = m_nObjHeight;//远程区宽高
 	int x = point.x * width / width0;//客户区鼠标x对应远程区鼠标位置
-	int y = point.y * height / height0;//客户区鼠标y对应远程区鼠标位置
+	int y = point.y * height / height0-70;//客户区鼠标y对应远程区鼠标位置
 
 	return CPoint(x,y);
 }
@@ -70,7 +70,7 @@ BOOL CWatchDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	SetTimer(0, 45, NULL);
+	SetTimer(0, 10, NULL);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
@@ -93,7 +93,7 @@ void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 			}
 			if (m_nObjHeight == -1)
 			{
-				m_nObjHeight = pParent->GetImage().GetWidth();
+				m_nObjHeight = pParent->GetImage().GetHeight();
 			}
 			pParent->GetImage().StretchBlt(
 				m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);

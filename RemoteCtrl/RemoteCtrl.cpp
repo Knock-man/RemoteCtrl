@@ -403,7 +403,7 @@ unsigned __stdcall threadLockDlg(void* arg)
         //按按键退出消息循环
         if (msg.message == WM_KEYDOWN)
         {
-            if (msg.wParam == 0x1B)break;//按Esc键退出
+            //if (msg.wParam == 0x1B)break;//按Esc键退出
         }
     }
     ClipCursor(NULL);//恢复鼠标范围
