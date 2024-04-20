@@ -38,6 +38,7 @@ public:
 private:
 	CImage m_image;//缓存
 	bool m_isFull;//缓存是否有数据 true表示有缓存数据 false表示没有缓存数据
+	bool m_isClosed;//监视是否关闭
 private:
 	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=nullptr, size_t nLength=0);
 	CString Getpath(HTREEITEM hTree);
