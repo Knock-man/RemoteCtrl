@@ -12,7 +12,10 @@
 #define IDD_DLG_WATCH                   133
 #define IDC_BUTTON1                     1000
 #define IDC_BTN_TEST                    1000
+#define IDC_BTN_LOCK                    1000
 #define IDC_EDIT_PORT                   1001
+#define IDC_BTN_LOCK2                   1001
+#define IDC_BTN_UNLOCK                  1001
 #define IDC_IPADDRESS_SERV              1002
 #define IDC_TREE_DIR                    1009
 #define IDC_LIST_FILE                   1012

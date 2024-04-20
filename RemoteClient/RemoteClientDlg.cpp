@@ -628,6 +628,8 @@ LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case 6://接收屏幕数据操作
+	case 7://锁机
+	case 8://解锁
 	{
 		ret = SendCommandPacket(cmd, wParam & 1);
 		break;

@@ -368,19 +368,31 @@ unsigned __stdcall threadLockDlg(void* arg)
     rect.right = GetSystemMetrics(SM_CXFULLSCREEN);//获得屏幕像素大小
     rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN) + 70;
     dlg.MoveWindow(rect);//将窗口移到矩形区域
-
+    CWnd* pText = dlg.GetDlgItem(IDC_STATIC);
+    if (pText)
+    {
+        CRect rtText;
+        pText->GetWindowRect(rtText);
+        int nWindth = rtText.Width();
+        int x = (rect.right - nWindth) / 2;
+        int nHeight = rtText.Height();
+        int y = (rect.bottom - nHeight) / 2;
+        pText->MoveWindow(x, y, rtText.Width(), rtText.Height());
+   }
     //窗口置于顶层
     dlg.SetWindowPos(&dlg.wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
     //隐藏鼠标
     ShowCursor(false);
     //隐藏任务栏
     ::ShowWindow(::FindWindow(TEXT("shell_TrayWnd"), NULL), SW_HIDE);
+    //限制鼠标活动范围
+    dlg.GetWindowRect(rect);
     //限制鼠标只能在左上角一个像素点移动
     rect.left = 0;
     rect.top = 0;
     rect.right = 1;
     rect.bottom = 1;
-    ClipCursor(rect);
+    ClipCursor(rect);//鼠标活动矩形区域
 
     //消息循环
     MSG msg;
@@ -394,8 +406,10 @@ unsigned __stdcall threadLockDlg(void* arg)
             if (msg.wParam == 0x1B)break;//按Esc键退出
         }
     }
-    
+    ClipCursor(NULL);//恢复鼠标范围
+    //恢复任务栏
     ::ShowWindow(::FindWindow(TEXT("shell_TrayWnd"), NULL), SW_SHOW);
+    //恢复鼠标
     ShowCursor(true);
     dlg.DestroyWindow();
     _endthreadex(0);
