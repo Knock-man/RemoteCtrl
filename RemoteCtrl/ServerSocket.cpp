@@ -57,7 +57,46 @@ bool CServerSocket::InitSocket()
 	{
 		return false;
 	};
+	
 	return true;
+}
+
+int CServerSocket::Run(SOCKET_CALLBACK callback, void* cmdObject)
+{
+	m_callback = callback;//回调函数
+	m_arg_cmdObject = cmdObject;//commad对象
+	//网络初始化
+	bool ret  = InitSocket();
+	if (ret == false)return -1;
+
+	std::list<CPacket> listPacket;
+
+	int count = 0;
+	while (true)
+	{
+		//建立连接
+		if (AcceptClient() == false)
+		{
+			if (count >= 3) {
+				return -2;
+			}
+			count++;
+		}
+		//接收数据
+		int ret = DealCommand();
+		if (ret > 0)
+		{
+			//执行相应命令
+			m_callback(m_arg_cmdObject, ret,listPacket,m_packet);
+			while (listPacket.size() > 0) {
+				Send(listPacket.front());
+				listPacket.pop_front();
+			}
+		}
+		CloseSocket();
+	}
+	
+	return 0;
 }
 
 //接收客户端连接
@@ -100,8 +139,12 @@ int CServerSocket::DealCommand()
 
 void CServerSocket::CloseSocket()
 {
-	closesocket(m_clntsock);
-	m_clntsock = -1;
+	if (m_clntsock != INVALID_SOCKET)
+	{
+		closesocket(m_clntsock);
+		m_clntsock = -1;
+	}
+	
 }
 
 //发送
@@ -158,136 +201,5 @@ BOOL  CServerSocket::InitSockEnv() {
 
 
 
-//包类
 
-CPacket::CPacket():sHead(0),nLength(0),sCmd(0),sSum(0)
-{
-
-}
-// 解析包
-CPacket::CPacket(const BYTE * pData, size_t & nSize)
-{
-	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
-	size_t i = 0;
-	//取包头位
-	for (; i < nSize; i++)
-	{
-		if ((*(WORD*)(pData + i)) == 0xFEFF)//找到包头
-		{
-			sHead = *(WORD*)(pData + i);
-			i += 2;
-			break;
-		}
-	}
-
-	if ((i + 4 + 2 + 2) > nSize)//包数据不全 只有 [包头 包长度 控制命令 和校验]  没有数据段 解析失败
-	{
-		nSize = 0;
-		return;
-	}
-
-	//取包长度位
-	nLength = *(DWORD*)(pData + i); i += 4;
-	if (nLength + i > nSize)//包未完全接收到 nLength+sizeof(包头)+sizeof(包长度) pData缓冲区越界了
-	{
-		nSize = 0;
-		return;
-	}
-
-	//取出控制命令位
-	sCmd = *(WORD*)(pData + i); i += 2;
-
-	//保存数据段
-	if (nLength > 4)
-	{
-		strDate.resize(nLength - 2 - 2);//nLength - [控制命令位长度] - [校验位长度]
-		memcpy((void*)strDate.c_str(), pData + i, nLength - 4);
-		i = i + nLength - 2 - 2;
-	}
-
-	//取出校验位 并校验
-	sSum = *(WORD*)(pData + i); i += 2;
-	WORD sum = 0;
-	for (size_t j = 0; j < strDate.size(); j++)
-	{
-		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
-	}
-	//TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strDate.c_str(), sSum, sum);
-	if (sum == sSum)
-	{
-		nSize = i;
-		return;
-	}
-	nSize = 0;
-}
-//打包：封装成包
-CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
-{
-	sHead = 0xFEFF;
-	nLength = nSize + 4;
-	sCmd = nCmd;
-
-
-	if (nSize > 0)//有数据段
-	{
-		//打包数据段
-		strDate.resize(nSize);
-		memcpy((void*)strDate.c_str(), pData, nSize);
-	}
-	else//无数据段
-	{
-		strDate.clear();
-	}
-	
-	//打包检验位
-	sSum = 0;
-	for (size_t j = 0; j < strDate.size(); j++)
-	{
-		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
-	}
-	TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strDate.c_str(), sSum);
-}
-CPacket::CPacket(const CPacket& pack)
-{
-	sHead = pack.sHead;
-	nLength = pack.nLength;
-	sCmd = pack.sCmd;
-	strDate = pack.strDate;
-	sSum = pack.sSum;
-}
-CPacket& CPacket::operator=(const CPacket& pack)
-{
-	if (this != &pack)
-	{
-		sHead = pack.sHead;
-		nLength = pack.nLength;
-		sCmd = pack.sCmd;
-		strDate = pack.strDate;
-		sSum = pack.sSum;
-	}
-	return *this;
-	
-}
-CPacket::~CPacket()
-{
-
-}
-
-int CPacket::size()
-{
-	return nLength+6;
-}
-
-//将包转为字符串类型
-const char* CPacket::Data()
-{
-	strOut.resize(nLength + 6);
-	BYTE* pData = (BYTE*)strOut.c_str();
-	*(WORD*)pData = sHead;
-	*(DWORD*)(pData+2) = nLength;
-	*(WORD*)(pData + 2 +4) = sCmd;
-	memcpy(pData + 2 + 4 + 2, strDate.c_str(), strDate.size());
-	*(WORD*)(pData + 2 + 4+2+ strDate.size()) = sSum;
-	return strOut.c_str();
-}
 
