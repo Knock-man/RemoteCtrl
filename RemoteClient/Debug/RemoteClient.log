@@ -1,6 +1,7 @@
-﻿  CWatchDialog.cpp
+﻿  pch.cpp
   ClientSocket.cpp
 C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(286,24): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
+  CWatchDialog.cpp
   (编译源文件“/ClientSocket.cpp”)
   
   RemoteClient.cpp
@@ -13,5 +14,4 @@ C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(546,2
   
   StatusDlg.cpp
   正在生成代码...
-  LINK : 没有找到 C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe 或上一个增量链接没有生成它；正在执行完全链接
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe

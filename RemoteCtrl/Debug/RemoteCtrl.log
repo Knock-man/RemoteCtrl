@@ -1,9 +1,2 @@
-﻿  pch.cpp
-  LockDialog.cpp
-  RemoteCtrl.cpp
-  ServerSocket.cpp
-  正在生成代码...
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(120,15): warning C4305: “return”: 从“int”到“bool”截断
-  (编译源文件“/ServerSocket.cpp”)
-  
+﻿  Command.cpp
   RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteCtrl.exe

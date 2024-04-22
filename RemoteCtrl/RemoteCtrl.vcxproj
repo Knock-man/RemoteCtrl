@@ -141,6 +141,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CEdoyunTool.h" />
+    <ClInclude Include="Command.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="LockDialog.h" />
     <ClInclude Include="pch.h" />
@@ -150,6 +152,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CEdoyunTool.cpp" />
+    <ClCompile Include="Command.cpp" />
     <ClCompile Include="LockDialog.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
