@@ -38,10 +38,10 @@ int main()
         }
         else
         {
-            CCommand cmdObject;
+            CCommand cmdObject;//业务处理对象
             // TODO: 在此处为应用程序的行为编写代码。
             CServerSocket* pserver =  CServerSocket::getInstance();
-            int ret = pserver->Run(&CCommand::RunCommand,&cmdObject);//执行命令，传入回调函数
+            int ret = pserver->Run(&CCommand::RunCommand,&cmdObject);//执行命令，传入业务层回调函数
             switch (ret)
             {
             case -1:

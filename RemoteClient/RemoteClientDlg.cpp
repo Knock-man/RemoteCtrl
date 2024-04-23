@@ -87,6 +87,7 @@ void CRemoteClientDlg::DoDataExchange(CDataExchange* pDX)
 
 int CRemoteClientDlg::SendCommandPacket(int nCmd,bool bAutoClose ,BYTE* pData, size_t nLength)
 {
+
 	UpdateData();
 	CClientSocket* pClient = CClientSocket::getInstance();
 	bool ret = pClient->InitSocket(IP_Address, atoi((LPCTSTR)IP_PORT));//TODO返回值处理
