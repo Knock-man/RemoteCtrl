@@ -39,8 +39,9 @@ int main()
         else
         {
             CCommand cmdObject;//业务处理对象
-            // TODO: 在此处为应用程序的行为编写代码。
-            CServerSocket* pserver =  CServerSocket::getInstance();
+            //获得服务器实例
+            CServerSocket* pserver =  CServerSocket::getInstance(); 
+            //运行服务器
             int ret = pserver->Run(&CCommand::RunCommand,&cmdObject);//执行命令，传入业务层回调函数
             switch (ret)
             {

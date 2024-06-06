@@ -8,7 +8,6 @@ class CEdoyunTool
         {
             char buf[8] = "";
             if (i > 0 && (i % 16 == 0))strOut += "\n";
-            if (i > 0 && (i % 16 == 0))strOut += "\n";
             snprintf(buf, sizeof(buf), "%02X ", pData[i] & 0xFF);
             strOut += buf;
         }

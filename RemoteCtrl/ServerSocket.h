@@ -51,8 +51,9 @@ private:
 	void CloseSocket();
 	
 private:
-	SOCKET_CALLBACK m_callback;
+	SOCKET_CALLBACK m_callback;//回调函数
 	void* m_arg_cmdObject;
+
 	//套接字
 	SOCKET m_servsock;
 	SOCKET m_clntsock;
@@ -62,7 +63,8 @@ private:
 
 	std::vector<char> m_buffer;
 
-	//构造
+private:
+	//构造  初始化网络环境，分配服务器套接字
 	CServerSocket();
 
 	//析构

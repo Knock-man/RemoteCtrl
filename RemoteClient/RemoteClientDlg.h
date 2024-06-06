@@ -49,36 +49,38 @@ private:
 	void threadDownFile();
 
 	//线程函数
-	static void threadEntryForDownFile(void* arg);
+	static void threadEntryForDownFile(void* arg);//下载文件线程函数 调用 threadDownFile()
 	static void threadEntryForWatch(void*);
 	void threadWatchData();
 
 
 // 实现
 protected:
+	DECLARE_MESSAGE_MAP()//声明宏
 	HICON m_hIcon;
-	CStatusDlg m_dlgStatus;
+	CStatusDlg m_dlgStatus;//下载状态对话框
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
-	DECLARE_MESSAGE_MAP()
+	
 public:
 	afx_msg void OnBnClickedBtnTest();
 	DWORD IP_Address;
 	CString IP_PORT;
 	afx_msg void OnBnClickedBtnFileinfo();
 	CTreeCtrl m_Tree;
-	afx_msg void OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult);//双击树控件
 	afx_msg void OnNMClickTreeDir(NMHDR* pNMHDR, LRESULT* pResult);
 	// 显示文件
 	CListCtrl m_List;
-	afx_msg void OnNMRClickListFile(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMRClickListFile(NMHDR* pNMHDR, LRESULT* pResult);//右键单击列表控件
 	afx_msg void OnDeleteFile();
 	afx_msg void OnRunfile();
 	afx_msg void OnDownloadFile();
 	afx_msg LRESULT OnSendPacket(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedBtnStartWatch();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnIpnFieldchangedIpaddressServ(NMHDR* pNMHDR, LRESULT* pResult);
 };

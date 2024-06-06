@@ -1,16 +1,20 @@
-﻿  pch.cpp
-  ClientSocket.cpp
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(96,53): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ClientSocket.cpp”)
+﻿  RemoteClientDlg.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(475,2): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteClientDlg.cpp”)
   
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(119,42): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ClientSocket.cpp”)
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(510,12): warning C4244: “初始化”: 从“LRESULT”转换到“int”，可能丢失数据
+  (编译源文件“/RemoteClientDlg.cpp”)
   
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(227,18): warning C4267: “=”: 从“size_t”转换到“DWORD”，可能丢失数据
-  (编译源文件“/ClientSocket.cpp”)
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(570,2): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteClientDlg.cpp”)
   
-C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\RemoteClient\ClientSocket.cpp(285,24): warning C4244: “=”: 从“DWORD”转换到“WORD”，可能丢失数据
-  (编译源文件“/ClientSocket.cpp”)
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(585,12): warning C4244: “初始化”: 从“LRESULT”转换到“int”，可能丢失数据
+  (编译源文件“/RemoteClientDlg.cpp”)
   
-  RemoteClient.cpp
-  RemoteClientDlg.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(602,61): warning C4267: “参数”: 从“size_t”转换到“ULONG”，可能丢失数据
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\RemoteClientDlg.cpp(640,10): warning C4244: “初始化”: 从“WPARAM”转换到“int”，可能丢失数据
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
+  RemoteClient.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\x64\Debug\RemoteClient.exe

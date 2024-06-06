@@ -9,23 +9,26 @@ class CPacket
 {
 public:
 	CPacket();
-	CPacket(const BYTE* pData, size_t& nSize);//解包
-	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
+	~CPacket();
 	CPacket(const CPacket& pack);
 	CPacket& operator=(const CPacket& pack);
-	~CPacket();
+
+	CPacket(const BYTE* pData, size_t& nSize);//解包
+	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
+	
+	
 
 	int size();//包大小
 	const char* Data();//包
 
 public:
 	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
-	WORD sHead;//包头 FEFF  
-	DWORD nLength;//包长度（从控制命令开始，到和校验结束） 
-	WORD sCmd;//控制命令
-	std::string strDate;//包数据
-	WORD sSum;//和校验
-	std::string strOut;//整个包的数据
+	WORD sHead;//包头 FEFF   2字节
+	DWORD nLength;//包长度（从控制命令开始，到和校验结束）   4字节
+	WORD sCmd;//控制命令  2字节
+	std::string strData;//包数据段
+	WORD sSum;//和校验	2字节
+	std::string strOut;//整个包字符串形式
 };
 #pragma pack(pop)
 
@@ -45,6 +48,7 @@ typedef struct file_info
 	BOOL HasNext;//是否还有后续 0没有 1有
 	char szFileName[256];//文件名
 }FILEINFO, * PFILEINFO;
+
 //鼠标结构体
 typedef struct MouseEvent
 {
@@ -55,7 +59,7 @@ typedef struct MouseEvent
 		ptXY.x = 0;
 		ptXY.y = 0;
 	}
-	WORD nAction;//点击、移动、双击
-	WORD nButton;//左键、右键、滚轮
+	WORD nAction;//按键	点击、移动、双击
+	WORD nButton;//动作	左键、右键、滚轮
 	POINT ptXY;//坐标
 }MOUSEEV, * PMOUSEEV;

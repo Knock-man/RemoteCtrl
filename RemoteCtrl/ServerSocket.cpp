@@ -27,7 +27,6 @@ CServerSocket::CServerSocket(const CServerSocket& ss)
 CServerSocket::~CServerSocket() {
 	closesocket(m_servsock);
 	WSACleanup();
-
 };
 
 CServerSocket* CServerSocket::getInstance()
@@ -39,15 +38,15 @@ CServerSocket* CServerSocket::getInstance()
 //套接字初始化
 bool CServerSocket::InitSocket()
 {
+	//初始化地址结构
 	if (m_servsock == -1)return false;
 	sockaddr_in serv_addr;
 	memset(&serv_addr, 0, sizeof(serv_addr));
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	//serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(PORT);
-	//serv_addr.sin_port = PORT;
 
+	//bind listen
 	if (bind(m_servsock, (sockaddr*)&serv_addr, sizeof(serv_addr)) == -1)
 	{
 		return false;
@@ -63,13 +62,13 @@ bool CServerSocket::InitSocket()
 
 int CServerSocket::Run(SOCKET_CALLBACK callback, void* cmdObject)
 {
-	m_callback = callback;//回调函数
+	m_callback = callback;//业务层回调函数
 	m_arg_cmdObject = cmdObject;//commad对象
 	//网络初始化
 	bool ret  = InitSocket();
 	if (ret == false)return -1;
 
-	std::list<CPacket> listPacket;
+	std::list<CPacket> listPacket;//调取业务层处理结果
 
 	int count = 0;
 	while (true)
@@ -83,11 +82,11 @@ int CServerSocket::Run(SOCKET_CALLBACK callback, void* cmdObject)
 			count++;
 		}
 		//接收数据
-		int ret = DealCommand();
-		if (ret > 0)
+		int rcmd = DealCommand();//ret为操作类型
+		if (rcmd > 0)
 		{
 			//执行相应命令
-			m_callback(m_arg_cmdObject, ret,listPacket,m_packet);
+			m_callback(m_arg_cmdObject,rcmd,listPacket,m_packet);
 			while (listPacket.size() > 0) {
 				Send(listPacket.front());
 				listPacket.pop_front();
@@ -109,7 +108,7 @@ bool CServerSocket::AcceptClient()
 	return true;
 }
 
-//接收消息
+//接收消息	拆包 返回控制信息
 int CServerSocket::DealCommand()
 {
 	if (m_clntsock == -1)return -1;
@@ -119,7 +118,7 @@ int CServerSocket::DealCommand()
 	{
 		size_t len = recv(m_clntsock, buffer + index, BUFSIZE - index, 0);
 		//TRACE("[服务器]buff=%s  buffSize=%d\r\n", buffer, index + len);
-		if ((len <= 0) && (index <= 0))
+		if ((len <= 0) && (index <= 0))//断开连接/读到末尾
 		{
 			return -1;
 		}
@@ -167,7 +166,7 @@ bool CServerSocket::GetFilePath(std::string& strPath)
 {
 	if ((m_packet.sCmd == 2)|| (m_packet.sCmd == 3)|| (m_packet.sCmd == 4)|| (m_packet.sCmd == 9))
 	{
-		strPath = m_packet.strDate;
+		strPath = m_packet.strData;
 		return true;
 	}
 	return false;
@@ -178,7 +177,7 @@ bool CServerSocket::GetMouseEvent(MOUSEEV& mouse)
 {
 	if (m_packet.sCmd == 5)
 	{
-		memcpy(&mouse, m_packet.strDate.c_str(), sizeof(MOUSEEV));
+		memcpy(&mouse, m_packet.strData.c_str(), sizeof(MOUSEEV));
 		return true;
 	}
 	return false;
@@ -194,7 +193,7 @@ BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;
 	if (WSAStartup(MAKEWORD(1, 1), &data))
 	{
-		return false;
+		return FALSE;
 	}
 	return TRUE;
 }

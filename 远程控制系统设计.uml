@@ -1048,7 +1048,7 @@ b 请求控制客户端
 <XPD:REF name="Owner">Kq3EZWlHI02vcp7CNP260QAA</XPD:REF>
 </XPD:OBJ>
 <XPD:OBJ name="Attributes[3]" type="UMLAttribute" guid="LJwRE4I28EuIYxDBiDCZkAAA">
-<XPD:ATTR name="Name" type="string">strDate</XPD:ATTR>
+<XPD:ATTR name="Name" type="string">strData</XPD:ATTR>
 <XPD:ATTR name="TypeExpression" type="string">string</XPD:ATTR>
 <XPD:REF name="Type_">RiPCY3Q/q0CBO4oEqEjPlAAA</XPD:REF>
 <XPD:REF name="Owner">Kq3EZWlHI02vcp7CNP260QAA</XPD:REF>

@@ -27,7 +27,7 @@ public:
 	WORD sHead;//包头 FEFF  
 	DWORD nLength;//包长度（从控制命令开始，到和校验结束） 
 	WORD sCmd;//控制命令
-	std::string strDate;//包数据
+	std::string strData;//包数据
 	WORD sSum;//和校验
 	std::string strOut;//整个包的数据
 };

@@ -1,11 +1,38 @@
 #include"pch.h"
 #include "Packet.h"
 //包类
+
+//构造
 CPacket::CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0)
 {
 
 }
-// 解析包
+CPacket::CPacket(const CPacket& pack)
+{
+	sHead = pack.sHead;
+	nLength = pack.nLength;
+	sCmd = pack.sCmd;
+	strData = pack.strData;
+	sSum = pack.sSum;
+}
+CPacket& CPacket::operator=(const CPacket& pack)
+{
+	if (this != &pack)
+	{
+		sHead = pack.sHead;
+		nLength = pack.nLength;
+		sCmd = pack.sCmd;
+		strData = pack.strData;
+		sSum = pack.sSum;
+	}
+	return *this;
+
+}
+CPacket::~CPacket()
+{
+
+}
+// 解析包  拆包
 CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
 	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
@@ -41,19 +68,19 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 	//保存数据段
 	if (nLength > 4)
 	{
-		strDate.resize(nLength - 2 - 2);//nLength - [控制命令位长度] - [校验位长度]
-		memcpy((void*)strDate.c_str(), pData + i, nLength - 4);
+		strData.resize(nLength - 2 - 2);//nLength - [控制命令位长度] - [校验位长度]
+		memcpy((void*)strData.c_str(), pData + i, nLength - 4);
 		i = i + nLength - 2 - 2;
 	}
 
 	//取出校验位 并校验
 	sSum = *(WORD*)(pData + i); i += 2;
 	WORD sum = 0;
-	for (size_t j = 0; j < strDate.size(); j++)
+	for (size_t j = 0; j < strData.size(); j++)
 	{
-		sum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
+		sum += BYTE(strData[j]) & 0xFF;//只取字符低八位
 	}
-	//TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strDate.c_str(), sSum, sum);
+	//TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strData.c_str(), sSum, sum);
 	if (sum == sSum)
 	{
 		nSize = i;
@@ -72,47 +99,23 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	if (nSize > 0)//有数据段
 	{
 		//打包数据段
-		strDate.resize(nSize);
-		memcpy((void*)strDate.c_str(), pData, nSize);
+		strData.resize(nSize);
+		memcpy((void*)strData.c_str(), pData, nSize);
 	}
 	else//无数据段
 	{
-		strDate.clear();
+		strData.clear();
 	}
 
 	//打包检验位
 	sSum = 0;
-	for (size_t j = 0; j < strDate.size(); j++)
+	for (size_t j = 0; j < strData.size(); j++)
 	{
-		sSum += BYTE(strDate[j]) & 0xFF;//只取字符低八位
+		sSum += BYTE(strData[j]) & 0xFF;//只取字符低八位
 	}
-	TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strDate.c_str(), sSum);
+	TRACE("[服务器] sHead=%d nLength=%d data=[%s]  sSum=%d\r\n", sHead, nLength, strData.c_str(), sSum);
 }
-CPacket::CPacket(const CPacket& pack)
-{
-	sHead = pack.sHead;
-	nLength = pack.nLength;
-	sCmd = pack.sCmd;
-	strDate = pack.strDate;
-	sSum = pack.sSum;
-}
-CPacket& CPacket::operator=(const CPacket& pack)
-{
-	if (this != &pack)
-	{
-		sHead = pack.sHead;
-		nLength = pack.nLength;
-		sCmd = pack.sCmd;
-		strDate = pack.strDate;
-		sSum = pack.sSum;
-	}
-	return *this;
 
-}
-CPacket::~CPacket()
-{
-
-}
 
 int CPacket::size()
 {
@@ -127,7 +130,7 @@ const char* CPacket::Data()
 	*(WORD*)pData = sHead;
 	*(DWORD*)(pData + 2) = nLength;
 	*(WORD*)(pData + 2 + 4) = sCmd;
-	memcpy(pData + 2 + 4 + 2, strDate.c_str(), strDate.size());
-	*(WORD*)(pData + 2 + 4 + 2 + strDate.size()) = sSum;
+	memcpy(pData + 2 + 4 + 2, strData.c_str(), strData.size());
+	*(WORD*)(pData + 2 + 4 + 2 + strData.size()) = sSum;
 	return strOut.c_str();
 }

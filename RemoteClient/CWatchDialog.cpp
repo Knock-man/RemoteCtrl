@@ -70,30 +70,31 @@ BOOL CWatchDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	SetTimer(0, 10, NULL);
+	SetTimer(0, 10, NULL);//开启定时器
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
 
-
+//定时器执行函数
 void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 0)
 	{
 		CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
+		//pParent->GetImage() =  CImage m_image;
 		if (pParent->isFull())
 		{
 			CRect rect;
-			m_picture.GetWindowRect(rect);
+			m_picture.GetWindowRect(rect);//m_picture 的屏幕尺寸和位置存储在 rect 对象中
 			//pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
 			if (m_nObjWidth == -1)
 			{
-				m_nObjWidth = pParent->GetImage().GetWidth();
+				m_nObjWidth = pParent->GetImage().GetWidth();//接收到截图的宽
 			}
 			if (m_nObjHeight == -1)
 			{
-				m_nObjHeight = pParent->GetImage().GetHeight();
+				m_nObjHeight = pParent->GetImage().GetHeight();//接收到截图的高
 			}
 			pParent->GetImage().StretchBlt(
 				m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
@@ -204,7 +205,7 @@ void CWatchDialog::OnRButtonDown(UINT nFlags, CPoint point)
 		MOUSEEV event;
 		event.ptXY = remote;
 		event.nButton = 1;//右键
-		event.nAction = 2;//按下 //服务端要做对应修改
+		event.nAction = 2;//按下
 		CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
 		pParent->SendMessage(WM_SEND_PACKET, 5 << 1 | 1, (WPARAM) & event);
 	}
@@ -272,14 +273,14 @@ void CWatchDialog::OnOK()
 	//CDialog::OnOK();
 }
 
-
+//点击加锁
 void CWatchDialog::OnBnClickedBtnLock()
 {
 	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
 	pParent->SendMessage(WM_SEND_PACKET, 7 << 1 | 1);
 }
 
-
+//点击解锁
 void CWatchDialog::OnBnClickedBtnUnlock()
 {
 	CRemoteClientDlg* pParent = (CRemoteClientDlg*)GetParent();
