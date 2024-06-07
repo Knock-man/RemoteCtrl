@@ -21,10 +21,21 @@ public:
 	int m_nObjWidth;//截图宽
 	int m_nObjHeight;//截图高
 protected:
+	bool m_isFull;//缓存是否有数据 true表示有缓存数据 false表示没有缓存数据
+	
+
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 	DECLARE_MESSAGE_MAP()
 public:
+	bool isFull()const
+	{
+		return m_isFull;
+	}
+	void SetImageSatus(bool isFull = false)
+	{
+		m_isFull = isFull;
+	}
 	CPoint UserPointToRemoteScreenPoint(CPoint& point,bool isScreen = false);
 
 	virtual BOOL OnInitDialog();

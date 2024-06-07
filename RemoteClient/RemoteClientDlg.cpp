@@ -100,7 +100,6 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_COMMAND(ID_DELETE_FILE, &CRemoteClientDlg::OnDeleteFile)
 	ON_COMMAND(ID_RUNFILE, &CRemoteClientDlg::OnRunfile)
 	ON_COMMAND(ID_DOWNLOAD_FILE, &CRemoteClientDlg::OnDownloadFile)
-	ON_MESSAGE(WM_SEND_PACKET, &CRemoteClientDlg::OnSendPacket)
 	ON_BN_CLICKED(IDC_BTN_START_WATCH, &CRemoteClientDlg::OnBnClickedBtnStartWatch)
 	ON_WM_TIMER()
 	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS_SERV, &CRemoteClientDlg::OnIpnFieldchangedIpaddressServ)
@@ -149,7 +148,7 @@ BOOL CRemoteClientDlg::OnInitDialog()
 	UpdateData(FALSE);//将数据从成员变量推送到对话框的控件中
 	m_dlgStatus.Create(IDD_DLG_STATUS,this);//创建下载状态对话框  IDD_DLG_STATUS对话框ID
 	m_dlgStatus.ShowWindow(SW_HIDE);//隐藏下载状态对话框
-	m_isFull = false;//缓冲区是否有数据
+	//m_isFull = false;//缓冲区是否有数据
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -472,43 +471,6 @@ void CRemoteClientDlg::OnBnClickedBtnStartWatch()
 {
 	CClientController::getInstance()->StartWatchScreen();
 }
-
-
-//wParam:控制命令，长短连接
-LRESULT CRemoteClientDlg::OnSendPacket(WPARAM wParam, LPARAM lParam)
-{
-	int ret = 0;
-	int cmd = wParam >> 1;
-	switch (cmd)
-	{
-	case 4://接收文件操作
-	{
-		CString strFile = (LPCSTR)lParam;
-		//wParam共32个bit  前31个bit存储cmd 最后一个比特存储true/false
-		ret = CClientController::getInstance()->SendCommandPacket(cmd, wParam & 1, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
-		break;
-	}
-	case 5://鼠标操作
-	{
-		ret = CClientController::getInstance()->SendCommandPacket(cmd, wParam & 1, (BYTE*)(LPCSTR)lParam, sizeof(MOUSEEV));
-		break;
-	}
-	case 6://接收屏幕数据操作
-	case 7://锁机
-	case 8://解锁
-	{
-		ret = CClientController::getInstance()->SendCommandPacket(cmd, wParam & 1);
-		break;
-	}
-	default:
-		ret = -1;
-	}
-	return ret;
-}
-	
-
-
-
 
 
 void CRemoteClientDlg::OnTimer(UINT_PTR nIDEvent)

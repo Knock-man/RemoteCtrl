@@ -74,14 +74,14 @@ void CClientController::threadWatchScreen()
     Sleep(50);
     while (!m_isClosed)
     {
-        if (m_remoteDlg.isFull() == false)//更新数据到缓存
+        if (m_watchDlg.isFull() == false)//更新数据到缓存
         {
             int ret = SendCommandPacket(6);
             if (ret == 6)
             {
 
                 if (GetImage(m_remoteDlg.GetImage()) == 0) {//接收截图存入m_image中
-                    m_remoteDlg.SetImageSatus(true);
+                    m_watchDlg.SetImageSatus(true);
                 }
                 else
                 {
@@ -107,9 +107,9 @@ void CClientController::threadWatchScreenEntry(void* arg)
 //构造函数
 CClientController::CClientController() :m_StatusDlg(&m_remoteDlg), m_watchDlg(&m_remoteDlg)//设置父窗口
 {
-    if (CClientController::getInstance() == NULL)
-    {
-        CClientController::m_instance = CClientController::getInstance();
+    //if (CClientController::getInstance() == NULL)
+    //{
+        //CClientController::m_instance = CClientController::getInstance();
 
         //注册消息map<信号,执行函数>
         struct { UINT nMsg; MSGFUNC func; }MsgFuncs[] =
@@ -125,7 +125,7 @@ CClientController::CClientController() :m_StatusDlg(&m_remoteDlg), m_watchDlg(&m
             m_mapFunc.insert(std::pair<UINT, MSGFUNC>(MsgFuncs
                 [i].nMsg, MsgFuncs[i].func));
         }
-    }
+    //}
 
     //初始化线程
     m_hThreadDown = INVALID_HANDLE_VALUE;

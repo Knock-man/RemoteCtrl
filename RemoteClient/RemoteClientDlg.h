@@ -5,7 +5,6 @@
 #pragma once
 #include"StatusDlg.h"
 #include "ClientSocket.h"
-#define WM_SEND_PACKET (WM_USER+1) //发送数据包消息
 
 // CRemoteClientDlg 对话框
 class CRemoteClientDlg : public CDialogEx
@@ -24,20 +23,14 @@ public:
 
 
 public:
-	bool isFull()const
-	{
-		return m_isFull;
-	}
+	
 	CImage& GetImage() {
 		return m_image;
 	}
-	void SetImageSatus(bool isFull = false)
-	{
-		m_isFull = isFull;
-	}
+	
 private:
 	CImage m_image;//缓存
-	bool m_isFull;//缓存是否有数据 true表示有缓存数据 false表示没有缓存数据
+	
 	
 private:
 	CString Getpath(HTREEITEM hTree);
@@ -71,7 +64,6 @@ public:
 	afx_msg void OnDeleteFile();
 	afx_msg void OnRunfile();
 	afx_msg void OnDownloadFile();
-	afx_msg LRESULT OnSendPacket(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnBnClickedBtnStartWatch();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnIpnFieldchangedIpaddressServ(NMHDR* pNMHDR, LRESULT* pResult);

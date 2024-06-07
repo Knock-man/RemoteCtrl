@@ -19,8 +19,8 @@ public:
 	//获取单例实例接口
 	static CClientController* getInstance()
 	{
-		static CClientController server;
-		return &server;
+		static CClientController instance;
+		return &instance;
 	}
 	//初始化操作
 	int InitController();
@@ -100,9 +100,9 @@ public:
 	void StartWatchScreen()
 	{
 		m_isClosed = false;
-		CWatchDialog dlg(&m_remoteDlg);//显示对话框 传入父对象
+		//m_watchDlg.SetParent(&m_remoteDlg);
 		m_hThreadWatch = (HANDLE)_beginthread(&CClientController::threadWatchScreenEntry, 0, this);
-		dlg.DoModal();//调用模态对话框并在完成后返回。
+		m_watchDlg.DoModal();//调用模态对话框并在完成后返回。
 		m_isClosed = true;
 		//阻塞当前线程，等待m_hThreadWatch线程结束，最多等500毫秒
 		WaitForSingleObject(m_hThreadWatch, 500);

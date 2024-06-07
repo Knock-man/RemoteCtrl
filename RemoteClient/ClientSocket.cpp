@@ -97,7 +97,7 @@ int CClientSocket::DealCommand()
 	{
 		size_t len = recv(m_sock, buffer + index, BUFSIZE - index, 0);
 		TRACE("[¿Í»§¶Ë]len=%d buff=%s  buffSize=%d\r\n", len,buffer,index+len);
-		if ((len <= 0)&&(index<=0))
+		if (((int)len <= 0)&&((int)index<=0))
 		{
 			return -1;
 		}
