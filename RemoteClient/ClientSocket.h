@@ -20,7 +20,7 @@ public:
 	~CPacket();
 
 	int size();//包大小
-	const char* Data();//包
+	const char* CPacket::Data(std::string& strOut) const;//包
 
 public:
 	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
@@ -29,7 +29,7 @@ public:
 	WORD sCmd;//控制命令
 	std::string strData;//包数据
 	WORD sSum;//和校验
-	std::string strOut;//整个包的数据
+	//std::string strOut;//整个包的数据
 };
 #pragma pack(pop)
 //文件信息结构体
@@ -70,7 +70,7 @@ public:
 
 
 	//套接字初始化
-	bool CClientSocket::InitSocket(int nIP, int nPort);
+	bool CClientSocket::InitSocket();
 
 	void CloseSocket();
 
@@ -79,7 +79,7 @@ public:
 
 	//发送消息
 	bool Send(const void* pData, size_t nSize);
-	bool Send(CPacket& pack);
+	bool Send(const CPacket& pack);
 
 	//获取文件列表
 	bool GetFilePath(std::string& strPath);
@@ -87,6 +87,15 @@ public:
 	bool GetMouseEvent(MOUSEEV& mouse);
 
 	CPacket& GetPacket();
+
+	void UpdateAddress(int nIP, int nPort)
+	{
+		m_nIP = nIP;
+		m_nPort = nPort;
+	}
+private:
+	int m_nIP;//地址
+	int m_nPort;//端口
 private:
 	//套接字
 	SOCKET m_sock;

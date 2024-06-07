@@ -2,6 +2,7 @@
 #include "ClientSocket.h"
 #include "CWatchDialog.h"
 #include "RemoteClientDlg.h"
+#include "CEdoyunTool.h"
 #include "resource.h"
 #include "StatusDlg.h"
 #include <map>
@@ -29,14 +30,97 @@ public:
 
 	//发送消息
 	LRESULT SendMessage(MSG msg);
-protected:
-	CClientController();
 
+	//更新网络服务器地址
+	void UpdateAddress(int nIP, int nPort)
+	{
+		CClientSocket::getInstance()->UpdateAddress(nIP, nPort);
+	}
+	//接收数据
+	int DealCommand()
+	{
+		return CClientSocket::getInstance()->DealCommand();
+	}
+	void CloseSocket()
+	{
+		CClientSocket::getInstance()->CloseSocket();
+	}
+	//发送包
+	bool SendPacket(const CPacket& pack)
+	{
+		CClientSocket* pClient = CClientSocket::getInstance();
+		if (pClient->InitSocket() == false)return false;
+		pClient->Send(pack);
+	}
+	//发送数据
+	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=NULL, size_t nLength=0)
+	{
+		CClientSocket* pClient = CClientSocket::getInstance();
+		if (pClient->InitSocket() == false)return false;
+		pClient->Send(CPacket(nCmd, pData, nLength));
+		int cmd = DealCommand();
+		TRACE("ack:%d\r\n", cmd);
+		if (bAutoClose)CloseSocket();
+		return cmd;
+	}
+
+	//获得图片
+	int GetImage(CImage& image)
+	{
+		CClientSocket* pClient = CClientSocket::getInstance();
+		return CEdoyunTool::Bytes2Image(image, pClient->GetPacket().strData);
+	}
+	int DownFile(CString strPath)//strPath为远程下载文件路径
+	{
+		//弹出下载对话框
+		CFileDialog dlg(FALSE, NULL,
+			strPath, OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY
+			, NULL, &m_remoteDlg);
+		if (dlg.DoModal() == IDOK)//点击确认下载
+		{
+			m_strRemote = strPath;//远程文件路径名
+			m_strLocal = dlg.GetPathName();//本地保存文件的文件名
+			//开启线程下载
+			m_hThreadDown = (HANDLE)_beginthread(&CClientController::threadDownloadFileEntry, 0, this);//开启线程
+			if (WaitForSingleObject(m_hThreadDown, 0) != WAIT_TIMEOUT)//线程开启失败
+			{
+				return -1;
+			}
+			m_remoteDlg.BeginWaitCursor();//开启沙漏
+			m_StatusDlg.m_info.SetWindowText(TEXT("命令正在执行中"));
+			m_StatusDlg.ShowWindow(SW_SHOW);//显示对话框
+			m_StatusDlg.CenterWindow(&m_remoteDlg);//对话框居中
+			m_StatusDlg.SetActiveWindow();//设置为顶层窗口
+		}
+		return 0;
+		
+		
+	}
+
+	void StartWatchScreen()
+	{
+		m_isClosed = false;
+		CWatchDialog dlg(&m_remoteDlg);//显示对话框 传入父对象
+		m_hThreadWatch = (HANDLE)_beginthread(&CClientController::threadWatchScreenEntry, 0, this);
+		dlg.DoModal();//调用模态对话框并在完成后返回。
+		m_isClosed = true;
+		//阻塞当前线程，等待m_hThreadWatch线程结束，最多等500毫秒
+		WaitForSingleObject(m_hThreadWatch, 500);
+	}
+protected:
+	//下载文件线程
+	void threadDownloadFile();
+	static void threadDownloadFileEntry(void* arg);
+
+	//监控线程
+	void threadWatchScreen();
+	static void threadWatchScreenEntry(void* arg);
+
+	CClientController();
 	~CClientController()
 	{
 		//回收线程
 		WaitForSingleObject(m_hThread, 100);
-
 	}
 
 	//线程函数
@@ -95,7 +179,18 @@ private:
 	CWatchDialog m_watchDlg;//监控对话框
 	CRemoteClientDlg m_remoteDlg;//远程控制对话框
 	CStatusDlg m_StatusDlg;//状态栏对话框
+	bool m_isClosed;//监视是否关闭
+
+	//线程相关
 	HANDLE m_hThread;
 	unsigned int m_nThreadID;
+	HANDLE m_hThreadDown;
+	HANDLE m_hThreadWatch;
+
+	//下载文件的远程路径
+	CString m_strRemote;
+	//下载文件的本地保存路径
+	CString m_strLocal;
+	
 	static CClientController* m_instance;
 };

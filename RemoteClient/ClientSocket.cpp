@@ -4,7 +4,7 @@
 
 //网络服务类
 //构造
-CClientSocket::CClientSocket() {
+CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0) {
 	if (InitSockEnv() == FALSE)
 	{
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
@@ -24,6 +24,8 @@ CClientSocket::~CClientSocket() {
 CClientSocket::CClientSocket(const CClientSocket&  ss)
 {
 	m_sock = ss.m_sock;
+	m_nIP = ss.m_nIP;
+	m_nPort = ss.m_nPort;
 };
 
 CClientSocket* CClientSocket::getInstance()
@@ -48,7 +50,7 @@ std::string GetErrorInfo(int wsaErrCode)
 }
 
 //套接字初始化
-bool CClientSocket::InitSocket(int nIP,int nPort)
+bool CClientSocket::InitSocket()
 {
 	//不能在构造的时候初始化套接字，因为单例模式的对象生命周期是和程序一样的，所以程序只要没有关闭，上一次的套接字依旧存在，不能再重新分配套接字
 	if (m_sock != -1)CloseSocket();//保证分配的套接字是新的套接字
@@ -56,9 +58,9 @@ bool CClientSocket::InitSocket(int nIP,int nPort)
 	if (m_sock == -1)return false;
 	sockaddr_in serv_addr;
 	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_addr.s_addr = htonl(nIP);
+	serv_addr.sin_addr.s_addr = htonl(m_nIP);
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port = htons(nPort);
+	serv_addr.sin_port = htons(m_nPort);
 	if (serv_addr.sin_addr.s_addr == INADDR_ANY)
 	{
 		AfxMessageBox("指定的IP地址不存在");
@@ -119,11 +121,13 @@ bool CClientSocket::Send(const void* pData, size_t nSize)
 	return send(m_sock, (const char*)pData, nSize, 0) > 0;
 }
 
-bool CClientSocket::Send(CPacket& pack)
+bool CClientSocket::Send(const CPacket& pack)
 {
 	if (m_sock == -1)return false;
 	//TRACE("[客户端]准备发送数据%d\r\n", pack.sCmd);
-	return send(m_sock, pack.Data(), pack.size(), 0) > 0;
+	std::string strOut;
+	pack.Data(strOut);
+	return send(m_sock, strOut.c_str(), strOut.size(), 0) > 0;
 }
 
 bool CClientSocket::GetFilePath(std::string& strPath)
@@ -278,7 +282,7 @@ int CPacket::size()
 	return nLength + 6;
 }
 
-const char* CPacket::Data()
+const char* CPacket::Data(std::string& strOut) const
 {
 	strOut.resize(nLength + 6);
 	BYTE* pData = (BYTE*)strOut.c_str();
