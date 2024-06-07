@@ -160,7 +160,7 @@ BOOL CRemoteClientDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	UpdateData();
 	IP_PORT = TEXT("9527");
-	IP_Address = 0xC0A83480;
+	IP_Address = 0xC0A83484;
 	UpdateData(FALSE);
 	m_dlgStatus.Create(IDD_DLG_STATUS,this);//创建对话框
 	m_dlgStatus.ShowWindow(SW_HIDE);//隐藏

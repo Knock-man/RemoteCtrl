@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "framework.h"
 #include "RemoteClient.h"
-#include "RemoteClientDlg.h"
+#include "CClientController.h"
 #include "ClientSocket.h"
 
 #ifdef _DEBUG
@@ -73,9 +73,11 @@ BOOL CRemoteClientApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	CRemoteClientDlg dlg;
-	m_pMainWnd = &dlg;
-	INT_PTR nResponse = dlg.DoModal();
+	CClientController::getInstance()->InitController();//开启线程
+	INT_PTR nResponse = CClientController::getInstance()->Invoke(m_pMainWnd);//启动模态对话框
+	//CRemoteClientDlg dlg;
+	//m_pMainWnd = &dlg;
+	//INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
 	{
 		// TODO: 在此放置处理何时用
