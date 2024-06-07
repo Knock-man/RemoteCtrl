@@ -184,6 +184,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ClientController.h" />
     <ClInclude Include="ClientSocket.h" />
     <ClInclude Include="CWatchDialog.h" />
     <ClInclude Include="framework.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ClientController.cpp" />
     <ClCompile Include="ClientSocket.cpp" />
     <ClCompile Include="CWatchDialog.cpp" />
     <ClCompile Include="pch.cpp">

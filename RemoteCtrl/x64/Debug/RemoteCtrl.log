@@ -1,24 +1,14 @@
-﻿  pch.cpp
-  CEdoyunTool.cpp
+﻿  CEdoyunTool.cpp
   Command.cpp
-  LockDialog.cpp
-  Packet.cpp
-  RemoteCtrl.cpp
 C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\Command.cpp(118,28): warning C4244: “=”: 从“intptr_t”转换到“int”，可能丢失数据
-  ServerSocket.cpp
   (编译源文件“/Command.cpp”)
   
+  LockDialog.cpp
+  Packet.cpp
 C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\Packet.cpp(95,18): warning C4267: “=”: 从“size_t”转换到“DWORD”，可能丢失数据
   (编译源文件“/Packet.cpp”)
   
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(119,57): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(153,46): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
-  (编译源文件“/ServerSocket.cpp”)
-  
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\ServerSocket.cpp(162,15): warning C4305: “return”: 从“int”到“bool”截断
-  (编译源文件“/ServerSocket.cpp”)
-  
+  RemoteCtrl.cpp
   正在生成代码...
+  LINK : 没有找到 C:\Users\xbj\Desktop\远控\RemoteCtrl\x64\Debug\RemoteCtrl.exe 或上一个增量链接没有生成它；正在执行完全链接
   RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\x64\Debug\RemoteCtrl.exe
