@@ -5,7 +5,8 @@
 #include<list>
 #include<map>
 #include <vector>
-#define BUFSIZE 2048000
+#include<mutex>
+#define BUFSIZE 4096000
 #define PORT 9527
 
 #pragma pack(push)
@@ -98,8 +99,10 @@ public:
 		}		
 	}
 private:
+	HANDLE m_hThread;
 	std::map<HANDLE, bool>m_mapAutoClosed;//长短连接标记
 	bool m_bAutoClose;
+	std::mutex m_lock;
 	std::list<CPacket>m_lstSend;
 	std::map<HANDLE, std::list<CPacket>&> m_mapAck;
 	int m_nIP;//地址
@@ -107,6 +110,7 @@ private:
 private:
 	//套接字
 	SOCKET m_sock;
+
 
 	//数据包
 	CPacket m_packet;

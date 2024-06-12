@@ -7,7 +7,8 @@
 CClientSocket::CClientSocket():
 	m_nIP(INADDR_ANY),m_nPort(0),
 	m_sock(INVALID_SOCKET),
-	m_bAutoClose(true)
+	m_bAutoClose(true),
+	m_hThread(INVALID_HANDLE_VALUE)
 {
 	if (InitSockEnv() == FALSE)
 	{
@@ -124,21 +125,25 @@ int CClientSocket::DealCommand()
 bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)
 {
 	//开启通信线程
-	if (m_sock == INVALID_SOCKET)
+	if (m_sock == INVALID_SOCKET&&m_hThread == INVALID_HANDLE_VALUE)
 	{
 		//if ((InitSocket() == false))return false;//初始化网络
-		_beginthread(&CClientSocket::threadEntry, 0, this);
+		m_hThread = (HANDLE)_beginthread(&CClientSocket::threadEntry, 0, this);
 	}
+	m_lock.lock();
 	auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>&>(pack.hEvent, lstPacks));//接收Map
 	m_mapAutoClosed.insert(std::pair<HANDLE, bool>(pack.hEvent,isAutoClosed));//长短连接标记
 	m_lstSend.push_back(pack);//加入到发送队列
+	m_lock.unlock();
 	WaitForSingleObject(pack.hEvent, INFINITE);//无限等待被唤醒
 
 	std::map<HANDLE, std::list<CPacket>&>::iterator it;
 	it = m_mapAck.find(pack.hEvent);
 	if (it != m_mapAck.end())
 	{
+		m_lock.lock();
 		m_mapAck.erase(it);
+		m_lock.unlock();
 		return true;
 	} 
 	return false;
@@ -210,7 +215,9 @@ void CClientSocket::threadFunc()
 		{
 
 			TRACE("lstSend size:%d\r\n", m_lstSend.size());
+			m_lock.lock();
 			CPacket& head = m_lstSend.front();
+			m_lock.unlock();
 			if (Send(head) == false)//发送失败
 			{
 				TRACE("发送失败!\r\n");
@@ -225,7 +232,7 @@ void CClientSocket::threadFunc()
 				{
 					//发送成功，等待应答
 					int length = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
-					if (length > 0 || index > 0)
+					if ((length > 0) || (index > 0))
 					{
 						index += length;
 						size_t size = (size_t)index;
@@ -240,6 +247,7 @@ void CClientSocket::threadFunc()
 							if (it0->second)
 							{
 								SetEvent(head.hEvent);//短连接收一个包立马通知主线程接收完成
+								break;
 							}
 						}
 					}
@@ -252,14 +260,18 @@ void CClientSocket::threadFunc()
 					}
 				} while (it0->second == false);//保证继续接收，文件下载会分为多个包发送过来			}
 
-
+				m_lock.lock();
 				m_lstSend.pop_front();
+				m_lock.unlock();
 				if (InitSocket() == false)InitSocket();
 			}
 
 		}
-		CloseSocket();
+		Sleep(1);
+		
+		
 	}
+	CloseSocket();
 
 }
 

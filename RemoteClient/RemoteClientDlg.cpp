@@ -141,7 +141,7 @@ BOOL CRemoteClientDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	UpdateData();//从对话框的控件中检索数据到成员变量
 	IP_PORT = TEXT("9527");//端口	//默认窗口的地址
-	IP_Address = 0xC0A83484;//ip
+	IP_Address = 0xC0A83482;//ip
 	//刷新IP PORT
 	CClientController* pController = CClientController::getInstance();
 	pController->UpdateAddress(IP_Address, atoi((LPCTSTR)IP_PORT));
