@@ -4,7 +4,11 @@
 
 //网络服务类
 //构造
-CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0),m_sock(INVALID_SOCKET) {
+CClientSocket::CClientSocket():
+	m_nIP(INADDR_ANY),m_nPort(0),
+	m_sock(INVALID_SOCKET),
+	m_bAutoClose(true)
+{
 	if (InitSockEnv() == FALSE)
 	{
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
@@ -25,6 +29,7 @@ CClientSocket::~CClientSocket() {
 }
 CClientSocket::CClientSocket(const CClientSocket&  ss)
 {
+	m_bAutoClose = ss.m_bAutoClose;
 	m_sock = ss.m_sock;
 	m_nIP = ss.m_nIP;
 	m_nPort = ss.m_nPort;
@@ -116,23 +121,23 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
-bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks)
+bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)
 {
+	//开启通信线程
 	if (m_sock == INVALID_SOCKET)
 	{
-		if ((InitSocket() == false))return false;//初始化网络
+		//if ((InitSocket() == false))return false;//初始化网络
 		_beginthread(&CClientSocket::threadEntry, 0, this);
 	}
-	m_lstSend.push_back(pack);
+	auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>&>(pack.hEvent, lstPacks));//接收Map
+	m_mapAutoClosed.insert(std::pair<HANDLE, bool>(pack.hEvent,isAutoClosed));//长短连接标记
+	m_lstSend.push_back(pack);//加入到发送队列
 	WaitForSingleObject(pack.hEvent, INFINITE);//无限等待被唤醒
-	std::map<HANDLE, std::list<CPacket>>::iterator it;
+
+	std::map<HANDLE, std::list<CPacket>&>::iterator it;
 	it = m_mapAck.find(pack.hEvent);
 	if (it != m_mapAck.end())
 	{
-		for (auto i = it->second.begin(); i != it->second.end(); i++)
-		{
-			lstPacks.push_back(*i);
-		}
 		m_mapAck.erase(it);
 		return true;
 	} 
@@ -198,43 +203,63 @@ void CClientSocket::threadFunc()
 	strBuffer.resize(BUFSIZE);
 	char* pBuffer = (char*)strBuffer.c_str();
 	int index = 0;
+	InitSocket();
 	while (m_sock != INVALID_SOCKET)
 	{
 		if (m_lstSend.size() > 0)//等待有数据发送
 		{
+
 			TRACE("lstSend size:%d\r\n", m_lstSend.size());
 			CPacket& head = m_lstSend.front();
 			if (Send(head) == false)//发送失败
 			{
 				TRACE("发送失败!\r\n");
+
 				continue;
 			}
-			auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>>(head.hEvent, std::list<CPacket>()));
-			//发送成功，等待应答
-			int length = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
-			if (length > 0 || index > 0)
+			std::map<HANDLE, std::list<CPacket>&>::iterator it = m_mapAck.find(head.hEvent);
+			if (it != m_mapAck.end())
 			{
-				index += length;
-				size_t size = (size_t)index;
-				CPacket pack((BYTE*)pBuffer, size);
-				if (size > 0)
+				std::map<HANDLE, bool>::iterator it0 = m_mapAutoClosed.find(head.hEvent);//取长短连接标记
+				do
 				{
-					//TODP 通知对应的事件
-					pack.hEvent = head.hEvent;
-					pr.first->second.push_back(pack);//注意pr的类型,pr->second为bool类型
-					SetEvent(head.hEvent);
-					
-				}
+					//发送成功，等待应答
+					int length = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
+					if (length > 0 || index > 0)
+					{
+						index += length;
+						size_t size = (size_t)index;
+						CPacket pack((BYTE*)pBuffer, size);
+						if (size > 0)
+						{
+							//TODP 通知对应的事件
+							pack.hEvent = head.hEvent;
+							it->second.push_back(pack);
+							memmove(pBuffer, pBuffer + size, index - size);
+							index -= size;
+							if (it0->second)
+							{
+								SetEvent(head.hEvent);//短连接收一个包立马通知主线程接收完成
+							}
+						}
+					}
+					else if (length <= 0 && index <= 0)
+					{
+						CloseSocket();
+						SetEvent(head.hEvent);//长连接所有包接收完成/服务器关闭命令之后,再通知主线程接收完成
+						m_mapAutoClosed.erase(it0);
+						break;
+					}
+				} while (it0->second == false);//保证继续接收，文件下载会分为多个包发送过来			}
+
+
+				m_lstSend.pop_front();
+				if (InitSocket() == false)InitSocket();
 			}
-			else if (length <= 0 && index <= 0)
-			{
-				CloseSocket();
-			}
-			m_lstSend.pop_front();
+
 		}
-		
+		CloseSocket();
 	}
-	CloseSocket();
 
 }
 

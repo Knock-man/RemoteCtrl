@@ -24,13 +24,10 @@ public:
 
 public:
 	
-	CImage& GetImage() {
-		return m_image;
-	}
+
 	
 private:
-	CImage m_image;//缓存
-	
+
 	
 private:
 	CString Getpath(HTREEITEM hTree);

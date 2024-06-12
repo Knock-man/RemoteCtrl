@@ -58,7 +58,8 @@ public:
 		{
 			plstPacks = &lstPacks;//不需要传回返回值
 		}
-		pClient->SendPacket(CPacket(nCmd, pData, nLength, hEVent),*plstPacks);
+		pClient->SendPacket(CPacket(nCmd, pData, nLength, hEVent),*plstPacks,bAutoClose);
+		CloseHandle(hEVent);//回收事件句柄防止资源耗尽
 		if (plstPacks->size() > 0)
 		{	
 			return plstPacks->front().sCmd;

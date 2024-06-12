@@ -81,7 +81,7 @@ void CClientController::threadWatchScreen()
             int ret = SendCommandPacket(6,true,NULL,0,&lstPacks);
             if (ret == 6)
             {
-                if (CEdoyunTool::Bytes2Image(m_remoteDlg.GetImage(), 
+                if (CEdoyunTool::Bytes2Image(m_watchDlg.GetImage(), 
                     lstPacks.front().strData) == 0) {//接收截图存入m_image中
                     m_watchDlg.SetImageSatus(true);
                 }
@@ -168,7 +168,8 @@ LRESULT CClientController::SendMessage(MSG msg)
     PostThreadMessage(m_nThreadID, WM_SEND_MESSAGE,
         (WPARAM)&wParam, (LPARAM)&lParam);
     */
-    WaitForSingleObject(hEvent, -1);//回收事件
+    WaitForSingleObject(hEvent, INFINITE);//回收事件
+    CloseHandle(hEvent);
     return info.result;
 }
 

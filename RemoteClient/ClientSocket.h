@@ -79,7 +79,7 @@ public:
 	//接收消息
 	int DealCommand();
 
-	bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks);
+	bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
 	
 
 	//获取文件列表
@@ -98,8 +98,10 @@ public:
 		}		
 	}
 private:
+	std::map<HANDLE, bool>m_mapAutoClosed;//长短连接标记
+	bool m_bAutoClose;
 	std::list<CPacket>m_lstSend;
-	std::map<HANDLE, std::list<CPacket>> m_mapAck;
+	std::map<HANDLE, std::list<CPacket>&> m_mapAck;
 	int m_nIP;//地址
 	int m_nPort;//端口
 private:

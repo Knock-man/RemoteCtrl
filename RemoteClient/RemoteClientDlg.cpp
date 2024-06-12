@@ -213,15 +213,16 @@ void CRemoteClientDlg::OnBnClickedBtnTest()
 void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 {
 	//发送查看磁盘分区请求
-	int ret = CClientController::getInstance()->SendCommandPacket(1);
-	if (ret == -1)
+	std::list<CPacket> lstPackets;
+	int ret = CClientController::getInstance()->SendCommandPacket(1,true,NULL,0, &lstPackets);
+	if (ret == -1||(lstPackets.size()<=0))
 	{
 		AfxMessageBox(TEXT("命令处理失败"));
 		return;
 	}
+	CPacket& head = lstPackets.front();
 	//获取磁盘分区名称
-	CClientSocket* pClient = CClientSocket::getInstance();
-	std::string drivers = pClient->GetPacket().strData;//拿到磁盘盘符名称
+	std::string drivers = head.strData;//拿到磁盘盘符名称
 
 	//磁盘分区插入到树中
 	std::string dr;
@@ -277,7 +278,7 @@ void CRemoteClientDlg::LoadFileCurrent()
 		pInfo = (PFILEINFO)CClientSocket::getInstance()->GetPacket().strData.c_str();
 	};
 	TRACE("cout= %d\r\n", cout);
-	CClientController::getInstance()->CloseSocket();
+	//CClientController::getInstance()->CloseSocket();
 }
 //加载文件
 void CRemoteClientDlg::LoadFileInfo()
@@ -298,46 +299,36 @@ void CRemoteClientDlg::LoadFileInfo()
 
 	//获得完整的路径信息 D:\C\xbj\shixi
 	CString strPath = Getpath(hTreeSelected);
-	TRACE("path=%s\r\n", strPath);
+	std::list<CPacket>lstPackets;
+	//TRACE("path=%s\r\n", strPath);
 
 	//TRACE("发送路径:[%s]",strPath);
 	//发送查看目录下所有文件请求
-	int nCmd=CClientController::getInstance()->SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
-
-	//接收文件信息 PFILEINFO为文件结构体
-	PFILEINFO pInfo = (PFILEINFO)CClientSocket::getInstance()->GetPacket().strData.c_str();
-	int cout = 0;
-	while (pInfo->HasNext) {
-		//TRACE("[%s] isdir %d\r\n", pInfo->szFileName, pInfo->IsDirectory);
-		if (pInfo->IsDirectory)//是目录
+	int nCmd=CClientController::getInstance()->SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength(), &lstPackets);
+	if (lstPackets.size())
+	{
+		std::list<CPacket>::iterator it = lstPackets.begin();
+		for (; it != lstPackets.end(); it++)
 		{
-			if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
-			{//防止死递归，继续接收下一个文件
-				int cmd = CClientController::getInstance()->DealCommand();
-				//TRACE("ack:%d/r/n", cmd);
-				if (cmd < 0)break;
-				pInfo = (PFILEINFO)CClientSocket::getInstance()->GetPacket().strData.c_str();
-				continue;
+			PFILEINFO pInfo = (PFILEINFO)(*it).strData.c_str();
+			if (pInfo->HasNext == FALSE)continue;//结束
+			if (pInfo->IsDirectory)//是目录
+			{
+				if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
+				{//防止死递归,忽略
+					continue;
+				}
+				//树种显示目录
+				HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);
+				m_Tree.InsertItem("", hTemp, TVI_LAST);
 			}
-			//树种显示目录
-			HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);
-			m_Tree.InsertItem("", hTemp, TVI_LAST);
+			else
+			{
+				//List中显示文件
+				m_List.InsertItem(0, pInfo->szFileName);
+			}
 		}
-		else
-		{
-			//List中显示文件
-			m_List.InsertItem(0,pInfo->szFileName);
-		}
-		
-		int cmd = CClientController::getInstance()->DealCommand();//继续接收
-		cout++;
-		//TRACE("ack:%d/r/n", cmd);
-		if (cmd < 0)break;
-		pInfo = (PFILEINFO)CClientSocket::getInstance()->GetPacket().strData.c_str();
-	};
-	TRACE("cout= %d\r\n", cout);
-
-	CClientController::getInstance()->CloseSocket();
+	}
 }
 
 //获得hTree节点 完整路径信息 D:\C\xbj\shixi

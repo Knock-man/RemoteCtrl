@@ -89,20 +89,12 @@ void CWatchDialog::OnTimer(UINT_PTR nIDEvent)
 			CRect rect;
 			m_picture.GetWindowRect(rect);//m_picture 的屏幕尺寸和位置存储在 rect 对象中
 			//pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
-			CImage image;
-			pParent->GetImage(image);
-			if (m_nObjWidth == -1)
-			{
-				m_nObjWidth = image.GetWidth();//接收到截图的宽
-			}
-			if (m_nObjHeight == -1)
-			{
-				m_nObjHeight = image.GetHeight();//接收到截图的高
-			}
-			image.StretchBlt(
+			m_nObjWidth = m_image.GetWidth();//接收到截图的宽
+			m_nObjHeight = m_image.GetHeight();//接收到截图的高
+			m_image.StretchBlt(
 				m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
 			m_picture.InvalidateRect(NULL);
-			image.Destroy();
+			m_image.Destroy();
 			m_isFull = false;
 		}
 	}

@@ -20,6 +20,7 @@ public:
 public:
 	int m_nObjWidth;//截图宽
 	int m_nObjHeight;//截图高
+	CImage m_image;
 protected:
 	bool m_isFull;//缓存是否有数据 true表示有缓存数据 false表示没有缓存数据
 	
@@ -28,6 +29,9 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	CImage& GetImage() {
+		return m_image;
+	}
 	bool isFull()const
 	{
 		return m_isFull;
