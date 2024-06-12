@@ -8,6 +8,8 @@
 #include<mutex>
 #define BUFSIZE 4096000
 #define PORT 9527
+#define WM_SEND_PACK (WM_USER+1) //发送包数据
+#define WM_SEND_PACK_ACK (WM_USER+2) //发送包数据应答
 
 #pragma pack(push)
 #pragma pack(1)
@@ -17,7 +19,7 @@ class CPacket
 public:
 	CPacket();
 	CPacket(const BYTE* pData, size_t& nSize);//解包
-	CPacket(WORD nCmd, const BYTE* pData, size_t nSize, HANDLE hEvent);//打包
+	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
 	CPacket(const CPacket& pack);
 	CPacket& operator=(const CPacket& pack);
 	~CPacket();
@@ -32,7 +34,6 @@ public:
 	WORD sCmd;//控制命令
 	std::string strData;//包数据
 	WORD sSum;//和校验
-	HANDLE hEvent;//事件句柄
 };
 #pragma pack(pop)
 //文件信息结构体
@@ -50,6 +51,37 @@ typedef struct file_info
 	BOOL HasNext;//是否还有后续 0没有 1有
 	char szFileName[256];//文件名
 }FILEINFO, * PFILEINFO;
+
+
+enum {
+	CSM_AUTOCLOSE = 1,//CSM = Client SOCKET Mode 自动关闭模式
+};
+
+typedef struct PacketData{
+	std::string strData;//数据
+	UINT nMode;//模式
+	PacketData(const char* pData, size_t nLen, UINT mode)
+	{
+		strData.resize(nLen);
+		memcpy((char*)strData.c_str(), pData, nLen);
+		nMode = mode;
+	}
+	PacketData(const PacketData& data)
+	{
+		strData = data.strData;
+		nMode = data.nMode;
+	}
+	PacketData& operator=(const PacketData& data)
+	{
+		if (this != &data) {
+			strData = data.strData;
+			nMode = data.nMode;
+		}
+		return *this;
+	}
+}PACKET_DATA;
+
+
 //鼠标结构体
 typedef struct MouseEvent
 {
@@ -80,8 +112,8 @@ public:
 	//接收消息
 	int DealCommand();
 
-	bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
-	
+	//bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
+	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true);
 
 	//获取文件列表
 	bool GetFilePath(std::string& strPath);
@@ -99,6 +131,10 @@ public:
 		}		
 	}
 private:
+	typedef void(CClientSocket::* MSGFUNC)(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	std::map<UINT, MSGFUNC> m_mapFunc;
+
+	UINT m_nThreadID;
 	HANDLE m_hThread;
 	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表
 	bool m_bAutoClose;//长短连接
@@ -133,7 +169,9 @@ private:
 	bool Send(const void* pData, size_t nSize);
 	bool Send(const CPacket& pack);
 
-	static void threadEntry(void* arg);
-	void threadFunc();
+	void SendPack(UINT nMsg, WPARAM wParam/*缓冲区的值*/, LPARAM lParam/*缓冲区的长度*/);
+	static unsigned _stdcall threadEntry(void* arg);
+	//void threadFunc();
+	void threadFunc2();
 
 };

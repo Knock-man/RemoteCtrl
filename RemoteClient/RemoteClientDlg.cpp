@@ -206,7 +206,7 @@ HCURSOR CRemoteClientDlg::OnQueryDragIcon()
 //点击测试按钮
 void CRemoteClientDlg::OnBnClickedBtnTest()
 {
-	CClientController::getInstance()->SendCommandPacket(1981);
+	CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),1981);
 }
 
 //点击查看文件信息按钮
@@ -214,7 +214,7 @@ void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 {
 	//发送查看磁盘分区请求
 	std::list<CPacket> lstPackets;
-	int ret = CClientController::getInstance()->SendCommandPacket(1,true,NULL,0, &lstPackets);
+	int ret = CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),1,true,NULL,0);
 	if (ret == -1||(lstPackets.size()<=0))
 	{
 		AfxMessageBox(TEXT("命令处理失败"));
@@ -258,7 +258,7 @@ void CRemoteClientDlg::LoadFileCurrent()
 
 	
 	//发送查看目录下所有文件请求
-	int nCmd =CClientController::getInstance()->SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
+	int nCmd =CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
 	
 
 	//接收文件信息 PFILEINFO为文件结构体
@@ -304,7 +304,7 @@ void CRemoteClientDlg::LoadFileInfo()
 
 	//TRACE("发送路径:[%s]",strPath);
 	//发送查看目录下所有文件请求
-	int nCmd=CClientController::getInstance()->SendCommandPacket(2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength(), &lstPackets);
+	int nCmd=CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
 	if (lstPackets.size())
 	{
 		std::list<CPacket>::iterator it = lstPackets.begin();
@@ -412,7 +412,7 @@ void CRemoteClientDlg::OnDeleteFile()
 
 	//发送删除文件请求
 
-	int ret = CClientController::getInstance()->SendCommandPacket(9, true, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
+	int ret = CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),9, true, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
 	if (ret < 0) {
 		AfxMessageBox(TEXT("删除文件命令执行失败!!!"));
 	}
@@ -431,7 +431,7 @@ void CRemoteClientDlg::OnRunfile()
 	strFile = strPath + strFile;//路径
 
 	//发送打开文件请求
-	int ret = CClientController::getInstance()->SendCommandPacket(3, true, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
+	int ret = CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),3, true, (BYTE*)(LPCSTR)strFile, strFile.GetLength());
 	if (ret < 0) {
 		AfxMessageBox(TEXT("打开文件命令执行失败!!!"));
 	}

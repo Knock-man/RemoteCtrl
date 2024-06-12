@@ -46,25 +46,15 @@ public:
 		CClientSocket::getInstance()->CloseSocket();
 	}
 
-	//发送数据
-	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=NULL, size_t nLength=0, std::list<CPacket>* plstPacks=NULL)
+	//发送数据  返回值是状态
+	bool SendCommandPacket(HWND hWnd,//数据包收到后需要应答的窗口
+		int nCmd, 
+		bool bAutoClose=true, 
+		BYTE* pData=NULL, 
+		size_t nLength=0)
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();
-		//if (pClient->InitSocket() == false)return false;
-		HANDLE hEVent = CreateEvent(NULL, TRUE, FALSE, NULL);
-		//不应该直接发送，而是投入队列
-		std::list<CPacket> lstPacks;//临时应答结果包
-		if (plstPacks == NULL)
-		{
-			plstPacks = &lstPacks;//不需要传回返回值
-		}
-		pClient->SendPacket(CPacket(nCmd, pData, nLength, hEVent),*plstPacks,bAutoClose);
-		CloseHandle(hEVent);//回收事件句柄防止资源耗尽
-		if (plstPacks->size() > 0)
-		{	
-			return plstPacks->front().sCmd;
-		}
-		return -1;
+		return  pClient->SendPacket(hWnd,CPacket(nCmd, pData, nLength),bAutoClose);
 	}
 
 	//获得图片

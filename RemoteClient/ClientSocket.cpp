@@ -4,8 +4,10 @@
 
 //网络服务类
 //构造
-CClientSocket::CClientSocket():
-	m_nIP(INADDR_ANY),m_nPort(0),
+CClientSocket::CClientSocket() :
+
+
+	m_nIP(INADDR_ANY), m_nPort(0),
 	m_sock(INVALID_SOCKET),
 	m_bAutoClose(true),
 	m_hThread(INVALID_HANDLE_VALUE)
@@ -17,7 +19,22 @@ CClientSocket::CClientSocket():
 	}
 	m_buffer.resize(BUFSIZE);
 	memset(m_buffer.data(), 0, BUFSIZE);
-	//m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	
+	//初始化消息和消息函数对应的映射表
+	struct {
+		UINT message;
+		MSGFUNC func;
+	}funcs[] = {
+		{WM_SEND_PACK,&CClientSocket::SendPack},
+		{0,NULL}
+	};
+	for (int i = 0; funcs[i].message != 0; i++)
+	{
+		if (m_mapFunc.insert(std::pair<UINT, MSGFUNC>(funcs[i].message, funcs[i].func)).second == false)
+		{
+			TRACE("插入失败,消息值：%d 函数值%08X 序号:%d\r\n", funcs[i].message, funcs[i].func, i);
+		}
+	}
 	
 };
 
@@ -30,10 +47,16 @@ CClientSocket::~CClientSocket() {
 }
 CClientSocket::CClientSocket(const CClientSocket&  ss)
 {
+	m_hThread = INVALID_HANDLE_VALUE;
 	m_bAutoClose = ss.m_bAutoClose;
 	m_sock = ss.m_sock;
 	m_nIP = ss.m_nIP;
 	m_nPort = ss.m_nPort;
+	std::map<UINT, CClientSocket::MSGFUNC>::const_iterator it = ss.m_mapFunc.begin();
+	for (; it != ss.m_mapFunc.end(); it++)
+	{
+		m_mapFunc.insert(std::pair<UINT, MSGFUNC>(it->first, it->second));
+	}
 };
 
 CClientSocket* CClientSocket::getInstance()
@@ -122,6 +145,19 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
+bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed)
+{
+	if (m_hThread == INVALID_HANDLE_VALUE)
+	{
+		m_hThread = (HANDLE)_beginthreadex(NULL,0,&CClientSocket::threadEntry,this,0,&m_nThreadID);
+	}
+	UINT nMode = isAutoClosed ? CSM_AUTOCLOSE : 0;
+	std::string strOut;
+	pack.Data(strOut);
+	return PostThreadMessage(m_nThreadID, WM_SEND_PACK, (WPARAM)new PACKET_DATA(strOut.c_str(),strOut.size(),nMode),(LPARAM)hWnd);
+}
+
+/*
 bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)//lstPacks储存结果
 {
 	//开启通信线程
@@ -148,6 +184,8 @@ bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,
 	} 
 	return false;
 }
+*/
+
 
 //发送
 bool CClientSocket::Send(const void* pData, size_t nSize)
@@ -196,12 +234,17 @@ BOOL  CClientSocket::InitSockEnv() {
 	return TRUE;
 }
 
-void CClientSocket::threadEntry(void* arg)
+
+unsigned CClientSocket::threadEntry(void* arg)
 {
 	CClientSocket* thiz = (CClientSocket*)arg;
-	thiz->threadFunc();
+	thiz->threadFunc2();
+	_endthreadex(0);
+	return 0;
 }
 
+//通信线程
+/*
 void CClientSocket::threadFunc()
 {
 	std::string strBuffer;
@@ -255,24 +298,100 @@ void CClientSocket::threadFunc()
 					{
 						CloseSocket();
 						SetEvent(head.hEvent);//长连接所有包接收完成/服务器关闭命令之后,再通知主线程接收完成
-						m_mapAutoClosed.erase(it0);//删除长短标记
+						if (it0 != m_mapAutoClosed.end())
+						{
+							TRACE("SetEvent %d %d\r\n", head.sCmd, it0->second);
+						}
+						else
+						{
+							TRACE("异常情况，没有对应的pair\r\n");
+						}
 						break;
 					}
 				} while (it0->second == false);//保证长连接继续接收，如文件下载会分为多个包发送过来
 
 				m_lock.lock();
 				m_lstSend.pop_front();//处理完一个请求，从请求队列中弹出来
+				m_mapAutoClosed.erase(head.hEvent);//删除长短标记
 				m_lock.unlock();
 				if (InitSocket() == false)InitSocket();
 			}
-
 		}
 		Sleep(1);
-		
-		
 	}
 	CloseSocket();
 
+}
+*/
+
+void CClientSocket::threadFunc2()
+{
+	MSG msg;
+	while (::GetMessage(&msg, NULL, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		if (m_mapFunc.find(msg.message) != m_mapFunc.end())
+		{
+			//调用消息处理成员函数
+			(this->*m_mapFunc[msg.message])(msg.message, msg.wParam, msg.lParam);
+		}
+	}
+}
+
+void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+	//消息数据结构（数据和数据长度,模式）
+	//回调消息数据结构（HWND）
+	PACKET_DATA data = *(PACKET_DATA*)wParam;
+	delete (PACKET_DATA*)wParam;
+	HWND hWnd = (HWND)lParam;
+	if (InitSocket() == true)
+	{	
+		int ret = send(m_sock, (char*)data.strData.c_str(), (int)data.strData.size(), 0);
+		if (ret > 0)
+		{
+			size_t index = 0;
+			std::string strBuffer;
+			strBuffer.resize(BUFSIZE);
+			char* pBuffer = (char*)strBuffer.c_str();
+			while (m_sock != INVALID_SOCKET)
+			{
+				int len = recv(m_sock, pBuffer+index, BUFSIZE-index, 0);
+				if ((len > 0)||(index>0))
+				{
+					index += (size_t)len;
+					size_t nLen = index;
+					CPacket pack((BYTE*)pBuffer, nLen);
+					if (nLen > 0)//解包成功
+					{
+						::SendMessage(hWnd, WM_SEND_PACK_ACK, (WPARAM)new CPacket(pack), 0);
+						if (data.nMode & CSM_AUTOCLOSE)//短连接自动关闭
+						{
+							CloseSocket();
+							return;
+						}
+					}
+					index -= nLen;
+					memmove(pBuffer, pBuffer + index, nLen);
+				}
+				else//关闭套接字或者网络异常
+				{
+					CloseSocket();
+					::SendMessage(hWnd, WM_SEND_PACK_ACK, NULL, 1);
+				}
+			}
+		}
+		else
+		{
+			CloseSocket();
+			::SendMessage(hWnd, WM_SEND_PACK_ACK, NULL, -1);
+		}
+	}
+	else
+	{
+		::SendMessage(hWnd, WM_SEND_PACK_ACK, NULL, -2);
+	}
 }
 
 
@@ -284,7 +403,7 @@ CPacket::CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0)
 
 }
 //解析包
-CPacket::CPacket(const BYTE* pData, size_t& nSize):hEvent(INVALID_HANDLE_VALUE)
+CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
 	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
 	size_t i = 0;
@@ -340,7 +459,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize):hEvent(INVALID_HANDLE_VALUE)
 	nSize = 0;
 }
 //打包：封装成包
-CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize,HANDLE hEvent)
+CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 {
 	sHead = 0xFEFF;
 	nLength = nSize + 4;
@@ -364,7 +483,6 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize,HANDLE hEvent)
 	{
 		sSum += BYTE(strData[j]) & 0xFF;//只取字符低八位
 	}
-	this->hEvent = hEvent;
 }
 CPacket::CPacket(const CPacket& pack)
 {
@@ -373,7 +491,6 @@ CPacket::CPacket(const CPacket& pack)
 	sCmd = pack.sCmd;
 	strData = pack.strData;
 	sSum = pack.sSum;
-	hEvent = pack.hEvent;
 }
 CPacket& CPacket::operator=(const CPacket& pack)
 {
@@ -384,7 +501,6 @@ CPacket& CPacket::operator=(const CPacket& pack)
 		sCmd = pack.sCmd;
 		strData = pack.strData;
 		sSum = pack.sSum;
-		hEvent = pack.hEvent;
 	}
 	return *this;
 

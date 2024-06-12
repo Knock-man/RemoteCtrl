@@ -20,7 +20,7 @@ void CClientController::threadDownloadFile()
     CClientSocket* pClient = CClientSocket::getInstance();
     do {
         //网络模块发送下载文件请求
-        int ret = SendCommandPacket(4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength());
+        int ret = SendCommandPacket(m_remoteDlg,4, false,(BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength());
         if (ret < 0)
         {
             {
@@ -78,7 +78,9 @@ void CClientController::threadWatchScreen()
         if (m_watchDlg.isFull() == false)//更新数据到缓存
         {
             std::list<CPacket> lstPacks;
-            int ret = SendCommandPacket(6,true,NULL,0,&lstPacks);
+            int ret = SendCommandPacket(m_watchDlg.GetSafeHwnd(), true, NULL, 0);
+           //添加消息响应函数WM_SEND_PACK_ACK
+            //TODO :控制发送频率
             if (ret == 6)
             {
                 if (CEdoyunTool::Bytes2Image(m_watchDlg.GetImage(), 
