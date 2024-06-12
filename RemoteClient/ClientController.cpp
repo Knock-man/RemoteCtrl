@@ -4,7 +4,7 @@
 std::map<UINT, CClientController::MSGFUNC> CClientController::m_mapFunc;
 CClientController* CClientController::m_instance = NULL;
 
-//下载文件
+//下载文件线程函数
 void CClientController::threadDownloadFile()
 {
     //打开保存文件
@@ -61,7 +61,7 @@ void CClientController::threadDownloadFile()
     m_remoteDlg.MessageBox(TEXT("下载完成!!"), TEXT("完成"));
     
 }
-
+//下载文件线程入口函数
 void _stdcall CClientController::threadDownloadFileEntry(void* arg)
 {
     CClientController* thiz = (CClientController*)arg;
@@ -69,6 +69,7 @@ void _stdcall CClientController::threadDownloadFileEntry(void* arg)
     _endthread();
 }
 
+//监控线程函数
 void CClientController::threadWatchScreen()
 {
     Sleep(50);
@@ -95,7 +96,7 @@ void CClientController::threadWatchScreen()
         }
     }
 }
-
+//监控线程入口函数
 void CClientController::threadWatchScreenEntry(void* arg)
 {
     CClientController* thiz = (CClientController*)arg;
@@ -135,7 +136,7 @@ CClientController::CClientController() :m_StatusDlg(&m_remoteDlg), m_watchDlg(&m
     m_isClosed = true;
 }
 
-//初始化函数  开启线程
+//初始化函数  开启线程，接收消息
 int CClientController::InitController()
 {
     //开启线程
@@ -157,21 +158,21 @@ int CClientController::Invoke(CWnd*& m_pMainWnd)
 //发送消息
 LRESULT CClientController::SendMessage(MSG msg)
 {
-    HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    HANDLE hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);//事件
     if (hEvent == NULL)return -2;
-    MSGINFO info(msg);
+    MSGINFO info(msg);//消息结构体
     PostThreadMessage(m_nThreadID, WM_SEND_MESSAGE,
         (WPARAM)&info, (LPARAM)hEvent);
     /*
     PostThreadMessage(m_nThreadID, WM_SEND_MESSAGE,
         (WPARAM)&wParam, (LPARAM)&lParam);
     */
-    WaitForSingleObject(hEvent, -1);
+    WaitForSingleObject(hEvent, -1);//回收事件
     return info.result;
 }
 
 
-//线程函数
+//消息线程函数入口
 unsigned __stdcall CClientController::ThreadEntry(void* arg)
 {
     CClientController* thiz = (CClientController*)arg;
@@ -179,31 +180,6 @@ unsigned __stdcall CClientController::ThreadEntry(void* arg)
     _endthreadex(0);
     return 0;
 }
-
-LRESULT CClientController::OnSendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
-{
-    CClientSocket* pClient = CClientSocket::getInstance();
-    CPacket* pPacket = (CPacket*)wParam;
-    return pClient->Send(*pPacket);
-}
-
-LRESULT CClientController::OnSendData(UINT nMsg, WPARAM wParam, LPARAM lParam)
-{
-    CClientSocket* pClient = CClientSocket::getInstance();
-    char* pBuffer = (char*)wParam;
-    return pClient->Send(pBuffer,(int)lParam);
-}
-
-LRESULT CClientController::OnSendStatus(UINT nMsg, WPARAM wParam, LPARAM lParam)
-{
-    return m_StatusDlg.ShowWindow(SW_SHOW);//以非模态方式显示对话框
-}
-
-LRESULT CClientController::OnSendWatcher(UINT nMsg, WPARAM wParam, LPARAM lParam)
-{
-    return m_watchDlg.DoModal();//以模态方式显示对话框
-}
-
 void CClientController::threadFunc()
 {
     MSG msg;
@@ -241,3 +217,29 @@ void CClientController::threadFunc()
     }
 
 }
+
+//发送包
+LRESULT CClientController::OnSendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+    CClientSocket* pClient = CClientSocket::getInstance();
+    CPacket* pPacket = (CPacket*)wParam;
+    return pClient->Send(*pPacket);
+}
+//发送数据
+LRESULT CClientController::OnSendData(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+    CClientSocket* pClient = CClientSocket::getInstance();
+    char* pBuffer = (char*)wParam;
+    return pClient->Send(pBuffer,(int)lParam);
+}
+//显示状态框
+LRESULT CClientController::OnSendStatus(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+    return m_StatusDlg.ShowWindow(SW_SHOW);//以非模态方式显示对话框
+}
+//显示监控对话框
+LRESULT CClientController::OnSendWatcher(UINT nMsg, WPARAM wParam, LPARAM lParam)
+{
+    return m_watchDlg.DoModal();//以模态方式显示对话框
+}
+

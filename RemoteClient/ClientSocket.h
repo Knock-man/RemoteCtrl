@@ -2,6 +2,8 @@
 #include"framework.h"
 #include"pch.h"
 #include "string"
+#include<list>
+#include<map>
 #include <vector>
 #define BUFSIZE 2048000
 #define PORT 9527
@@ -14,7 +16,7 @@ class CPacket
 public:
 	CPacket();
 	CPacket(const BYTE* pData, size_t& nSize);//解包
-	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
+	CPacket(WORD nCmd, const BYTE* pData, size_t nSize, HANDLE hEvent);//打包
 	CPacket(const CPacket& pack);
 	CPacket& operator=(const CPacket& pack);
 	~CPacket();
@@ -29,7 +31,7 @@ public:
 	WORD sCmd;//控制命令
 	std::string strData;//包数据
 	WORD sSum;//和校验
-	//std::string strOut;//整个包的数据
+	HANDLE hEvent;
 };
 #pragma pack(pop)
 //文件信息结构体
@@ -94,6 +96,8 @@ public:
 		m_nPort = nPort;
 	}
 private:
+	std::list<CPacket>m_lstSend;
+	std::map<HANDLE, std::list<CPacket>> m_mapAck;
 	int m_nIP;//地址
 	int m_nPort;//端口
 private:
@@ -116,5 +120,8 @@ private:
 
 	//初始化网络环境
 	BOOL InitSockEnv();
-};
 
+	static void threadEntry(void* arg);
+	void threadFunc();
+
+};

@@ -18,6 +18,7 @@ CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0) {
 //析构
 CClientSocket::~CClientSocket() {
 	closesocket(m_sock);
+	m_sock = INVALID_SOCKET;
 	WSACleanup();
 
 }
@@ -161,6 +162,61 @@ BOOL  CClientSocket::InitSockEnv() {
 	return TRUE;
 }
 
+void CClientSocket::threadEntry(void* arg)
+{
+	CClientSocket* thiz = (CClientSocket*)arg;
+	thiz->threadFunc();
+}
+
+void CClientSocket::threadFunc()
+{
+	if (InitSocket() == false)
+	{
+		return;
+	}
+	std::string strBuffer;
+	strBuffer.resize(BUFSIZE);
+	char* pBuffer = (char*)strBuffer.c_str();
+	int index = 0;
+	while (m_sock != INVALID_SOCKET)
+	{
+		if (m_lstSend.size() > 0)//有数据发送
+		{
+			CPacket& head = m_lstSend.front();
+			if (Send(head) == false)//发送失败
+			{
+				TRACE("发送失败!\r\n");
+				continue;
+			}
+			auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>>(head.hEvent, std::list<CPacket>()));
+			//发送成功，等待应答
+			int length = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
+			if (length > 0 || index > 0)
+			{
+				index += length;
+				size_t size = (size_t)index;
+				CPacket pack((BYTE*)pBuffer, size);
+				if (size > 0)
+				{
+					//TODP 通知对应的事件
+					pack.hEvent = head.hEvent;
+					pr.first->second.push_back(pack);//注意pr的类型,pr->second为bool类型
+					SetEvent(head.hEvent);
+					
+				}
+			}
+			else if (length <= 0 && index <= 0)
+			{
+				CloseSocket();
+			}
+			m_lstSend.pop_front();
+
+		}
+		
+	}
+
+}
+
 
 
 //包类
@@ -170,7 +226,7 @@ CPacket::CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0)
 
 }
 //解析包
-CPacket::CPacket(const BYTE* pData, size_t& nSize)
+CPacket::CPacket(const BYTE* pData, size_t& nSize):hEvent(INVALID_HANDLE_VALUE)
 {
 	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
 	size_t i = 0;
@@ -226,7 +282,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 	nSize = 0;
 }
 //打包：封装成包
-CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
+CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize,HANDLE hEvent)
 {
 	sHead = 0xFEFF;
 	nLength = nSize + 4;
@@ -250,6 +306,7 @@ CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
 	{
 		sSum += BYTE(strData[j]) & 0xFF;//只取字符低八位
 	}
+	this->hEvent = hEvent;
 }
 CPacket::CPacket(const CPacket& pack)
 {
@@ -258,6 +315,7 @@ CPacket::CPacket(const CPacket& pack)
 	sCmd = pack.sCmd;
 	strData = pack.strData;
 	sSum = pack.sSum;
+	hEvent = pack.hEvent;
 }
 CPacket& CPacket::operator=(const CPacket& pack)
 {
@@ -268,6 +326,7 @@ CPacket& CPacket::operator=(const CPacket& pack)
 		sCmd = pack.sCmd;
 		strData = pack.strData;
 		sSum = pack.sSum;
+		hEvent = pack.hEvent;
 	}
 	return *this;
 

@@ -57,7 +57,9 @@ public:
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();
 		if (pClient->InitSocket() == false)return false;
-		pClient->Send(CPacket(nCmd, pData, nLength));
+		HANDLE hEVent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		//不应该直接发送，而是投入队列
+		pClient->Send(CPacket(nCmd, pData, nLength, hEVent));
 		int cmd = DealCommand();
 		TRACE("ack:%d\r\n", cmd);
 		if (bAutoClose)CloseSocket();
