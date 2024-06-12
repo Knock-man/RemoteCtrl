@@ -79,9 +79,8 @@ public:
 	//接收消息
 	int DealCommand();
 
-	//发送消息
-	bool Send(const void* pData, size_t nSize);
-	bool Send(const CPacket& pack);
+	bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks);
+	
 
 	//获取文件列表
 	bool GetFilePath(std::string& strPath);
@@ -92,8 +91,11 @@ public:
 
 	void UpdateAddress(int nIP, int nPort)
 	{
-		m_nIP = nIP;
-		m_nPort = nPort;
+		if ((m_nIP != nIP) || (m_nPort != nPort))//修改了 IP 端口
+		{
+			m_nIP = nIP;
+			m_nPort = nPort;
+		}		
 	}
 private:
 	std::list<CPacket>m_lstSend;
@@ -120,6 +122,10 @@ private:
 
 	//初始化网络环境
 	BOOL InitSockEnv();
+
+	//发送消息
+	bool Send(const void* pData, size_t nSize);
+	bool Send(const CPacket& pack);
 
 	static void threadEntry(void* arg);
 	void threadFunc();

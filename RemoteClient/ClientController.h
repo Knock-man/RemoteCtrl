@@ -45,25 +45,25 @@ public:
 	{
 		CClientSocket::getInstance()->CloseSocket();
 	}
-	//发送包
-	bool SendPacket(const CPacket& pack)
-	{
-		CClientSocket* pClient = CClientSocket::getInstance();
-		if (pClient->InitSocket() == false)return false;
-		pClient->Send(pack);
-	}
+
 	//发送数据
-	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=NULL, size_t nLength=0)
+	int SendCommandPacket(int nCmd, bool bAutoClose=true, BYTE* pData=NULL, size_t nLength=0, std::list<CPacket>* plstPacks=NULL)
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();
-		if (pClient->InitSocket() == false)return false;
+		//if (pClient->InitSocket() == false)return false;
 		HANDLE hEVent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		//不应该直接发送，而是投入队列
-		pClient->Send(CPacket(nCmd, pData, nLength, hEVent));
-		int cmd = DealCommand();
-		TRACE("ack:%d\r\n", cmd);
-		if (bAutoClose)CloseSocket();
-		return cmd;
+		std::list<CPacket> lstPacks;//临时应答结果包
+		if (plstPacks == NULL)
+		{
+			plstPacks = &lstPacks;//不需要传回返回值
+		}
+		pClient->SendPacket(CPacket(nCmd, pData, nLength, hEVent),*plstPacks);
+		if (plstPacks->size() > 0)
+		{	
+			return plstPacks->front().sCmd;
+		}
+		return -1;
 	}
 
 	//获得图片
@@ -141,8 +141,8 @@ protected:
 	}
 
 	//消息处理函数
-	LRESULT OnSendPack(UINT nMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT OnSendData(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	//LRESULT OnSendPack(UINT nMsg, WPARAM wParam, LPARAM lParam);
+	//LRESULT OnSendData(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSendStatus(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSendWatcher(UINT nMsg, WPARAM wParam, LPARAM lParam);
 private:

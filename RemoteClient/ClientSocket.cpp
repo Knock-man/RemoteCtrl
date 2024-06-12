@@ -4,7 +4,7 @@
 
 //网络服务类
 //构造
-CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0) {
+CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0),m_sock(INVALID_SOCKET) {
 	if (InitSockEnv() == FALSE)
 	{
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
@@ -13,6 +13,7 @@ CClientSocket::CClientSocket():m_nIP(INADDR_ANY),m_nPort(0) {
 	m_buffer.resize(BUFSIZE);
 	memset(m_buffer.data(), 0, BUFSIZE);
 	//m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	
 };
 
 //析构
@@ -115,6 +116,29 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
+bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks)
+{
+	if (m_sock == INVALID_SOCKET)
+	{
+		if ((InitSocket() == false))return false;//初始化网络
+		_beginthread(&CClientSocket::threadEntry, 0, this);
+	}
+	m_lstSend.push_back(pack);
+	WaitForSingleObject(pack.hEvent, INFINITE);//无限等待被唤醒
+	std::map<HANDLE, std::list<CPacket>>::iterator it;
+	it = m_mapAck.find(pack.hEvent);
+	if (it != m_mapAck.end())
+	{
+		for (auto i = it->second.begin(); i != it->second.end(); i++)
+		{
+			lstPacks.push_back(*i);
+		}
+		m_mapAck.erase(it);
+		return true;
+	} 
+	return false;
+}
+
 //发送
 bool CClientSocket::Send(const void* pData, size_t nSize)
 {
@@ -170,18 +194,15 @@ void CClientSocket::threadEntry(void* arg)
 
 void CClientSocket::threadFunc()
 {
-	if (InitSocket() == false)
-	{
-		return;
-	}
 	std::string strBuffer;
 	strBuffer.resize(BUFSIZE);
 	char* pBuffer = (char*)strBuffer.c_str();
 	int index = 0;
 	while (m_sock != INVALID_SOCKET)
 	{
-		if (m_lstSend.size() > 0)//有数据发送
+		if (m_lstSend.size() > 0)//等待有数据发送
 		{
+			TRACE("lstSend size:%d\r\n", m_lstSend.size());
 			CPacket& head = m_lstSend.front();
 			if (Send(head) == false)//发送失败
 			{
@@ -210,10 +231,10 @@ void CClientSocket::threadFunc()
 				CloseSocket();
 			}
 			m_lstSend.pop_front();
-
 		}
 		
 	}
+	CloseSocket();
 
 }
 
