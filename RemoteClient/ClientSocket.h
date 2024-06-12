@@ -32,7 +32,7 @@ public:
 	WORD sCmd;//控制命令
 	std::string strData;//包数据
 	WORD sSum;//和校验
-	HANDLE hEvent;
+	HANDLE hEvent;//事件句柄
 };
 #pragma pack(pop)
 //文件信息结构体
@@ -100,11 +100,11 @@ public:
 	}
 private:
 	HANDLE m_hThread;
-	std::map<HANDLE, bool>m_mapAutoClosed;//长短连接标记
-	bool m_bAutoClose;
+	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表
+	bool m_bAutoClose;//长短连接
 	std::mutex m_lock;
-	std::list<CPacket>m_lstSend;
-	std::map<HANDLE, std::list<CPacket>&> m_mapAck;
+	std::list<CPacket>m_lstSend;//发送队列
+	std::map<HANDLE, std::list<CPacket>&> m_mapAck;//接收结果映射表
 	int m_nIP;//地址
 	int m_nPort;//端口
 private:

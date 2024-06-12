@@ -122,12 +122,11 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
-bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)
+bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)//lstPacks储存结果
 {
 	//开启通信线程
-	if (m_sock == INVALID_SOCKET&&m_hThread == INVALID_HANDLE_VALUE)
+	if (m_sock == INVALID_SOCKET && m_hThread == INVALID_HANDLE_VALUE)
 	{
-		//if ((InitSocket() == false))return false;//初始化网络
 		m_hThread = (HANDLE)_beginthread(&CClientSocket::threadEntry, 0, this);
 	}
 	m_lock.lock();
@@ -135,7 +134,8 @@ bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,
 	m_mapAutoClosed.insert(std::pair<HANDLE, bool>(pack.hEvent,isAutoClosed));//长短连接标记
 	m_lstSend.push_back(pack);//加入到发送队列
 	m_lock.unlock();
-	WaitForSingleObject(pack.hEvent, INFINITE);//无限等待被唤醒
+
+	WaitForSingleObject(pack.hEvent, INFINITE);//无限阻塞，直至被唤醒(数据接收完成，m_hThread线程会唤醒)
 
 	std::map<HANDLE, std::list<CPacket>&>::iterator it;
 	it = m_mapAck.find(pack.hEvent);
@@ -208,60 +208,60 @@ void CClientSocket::threadFunc()
 	strBuffer.resize(BUFSIZE);
 	char* pBuffer = (char*)strBuffer.c_str();
 	int index = 0;
-	InitSocket();
+
+	InitSocket();//初始化网络
 	while (m_sock != INVALID_SOCKET)
 	{
-		if (m_lstSend.size() > 0)//等待有数据发送
+		if (m_lstSend.size() > 0)//等待发送队列不为空
 		{
-
 			TRACE("lstSend size:%d\r\n", m_lstSend.size());
 			m_lock.lock();
-			CPacket& head = m_lstSend.front();
+			CPacket& head = m_lstSend.front();//取出请求队列队头数据包
 			m_lock.unlock();
-			if (Send(head) == false)//发送失败
+			if (Send(head) == false)
 			{
 				TRACE("发送失败!\r\n");
-
 				continue;
 			}
-			std::map<HANDLE, std::list<CPacket>&>::iterator it = m_mapAck.find(head.hEvent);
+			//发送成功
+			std::map<HANDLE, std::list<CPacket>&>::iterator it = m_mapAck.find(head.hEvent);//找到储存结果对于的key
 			if (it != m_mapAck.end())
 			{
-				std::map<HANDLE, bool>::iterator it0 = m_mapAutoClosed.find(head.hEvent);//取长短连接标记
+				std::map<HANDLE, bool>::iterator it0 = m_mapAutoClosed.find(head.hEvent);//取网络长短连接标记
 				do
 				{
-					//发送成功，等待应答
-					int length = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
-					if ((length > 0) || (index > 0))
+					//等待应答
+					int len = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
+					if ((len > 0) || (index > 0))
 					{
-						index += length;
+						index += len;
 						size_t size = (size_t)index;
 						CPacket pack((BYTE*)pBuffer, size);
-						if (size > 0)
+						if (size > 0)//成功解包
 						{
-							//TODP 通知对应的事件
+							//将接收到的包储存到事件key对应的value列表中(list<CPacket>)
 							pack.hEvent = head.hEvent;
 							it->second.push_back(pack);
 							memmove(pBuffer, pBuffer + size, index - size);
 							index -= size;
-							if (it0->second)
+							if (it0->second)//事件是短连接(如鼠标事件，查看锁机事件，收到一个包网络就可以关闭了)
 							{
 								SetEvent(head.hEvent);//短连接收一个包立马通知主线程接收完成
 								break;
 							}
 						}
 					}
-					else if (length <= 0 && index <= 0)
+					else if (len <= 0 && index <= 0)//对端网络关闭，缓冲区也读取完毕
 					{
 						CloseSocket();
 						SetEvent(head.hEvent);//长连接所有包接收完成/服务器关闭命令之后,再通知主线程接收完成
-						m_mapAutoClosed.erase(it0);
+						m_mapAutoClosed.erase(it0);//删除长短标记
 						break;
 					}
-				} while (it0->second == false);//保证继续接收，文件下载会分为多个包发送过来			}
+				} while (it0->second == false);//保证长连接继续接收，如文件下载会分为多个包发送过来
 
 				m_lock.lock();
-				m_lstSend.pop_front();
+				m_lstSend.pop_front();//处理完一个请求，从请求队列中弹出来
 				m_lock.unlock();
 				if (InitSocket() == false)InitSocket();
 			}
