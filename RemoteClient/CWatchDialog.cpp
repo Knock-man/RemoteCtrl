@@ -44,7 +44,7 @@ BEGIN_MESSAGE_MAP(CWatchDialog, CDialog)
 	ON_STN_CLICKED(IDC_WATCH, &CWatchDialog::OnStnClickedWatch)
 	ON_BN_CLICKED(IDC_BTN_LOCK, &CWatchDialog::OnBnClickedBtnLock)
 	ON_BN_CLICKED(IDC_BTN_UNLOCK, &CWatchDialog::OnBnClickedBtnUnlock)
-	ON_MESSAGE(WM_SEND_PACK,&CWatchDialog::OnSendPacketAck)
+	ON_MESSAGE(WM_SEND_PACK_ACK,&CWatchDialog::OnSendPacketAck)
 END_MESSAGE_MAP()
 
 
@@ -119,53 +119,7 @@ typedef struct MouseEvent
 
 */
 
-//接收ACK消息处理函数
-LRESULT CWatchDialog::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
-{
-	 if (lParam == -1||(lParam == -2))//错误处理
-	 {
 
-	 }
-	 else if (lParam == 1)//对方关闭了套接字
-	 {
-
-	 }
-	else
-	{
-		CPacket* pPacket = (CPacket*)wParam;
-		if (pPacket != NULL)
-		{
-			switch (pPacket->sCmd)
-			{
-			case 6://显示
-			{
-				if (m_isFull)
-				{
-					CEdoyunTool::Bytes2Image(m_image, pPacket->strData);
-					CRect rect;
-					m_picture.GetWindowRect(rect);//m_picture 的屏幕尺寸和位置存储在 rect 对象中
-					//pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
-					m_nObjWidth = m_image.GetWidth();//接收到截图的宽
-					m_nObjHeight = m_image.GetHeight();//接收到截图的高
-					m_image.StretchBlt(
-						m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
-					m_picture.InvalidateRect(NULL);
-					m_image.Destroy();
-					m_isFull = false;
-				}
-				break;
-			}
-			case 5://鼠标
-			case 7:
-			case 8:
-			default:
-				break;
-			}
-		}
-	}
-	
-	return 0;
-}
 //左键双击
 void CWatchDialog::OnLButtonDblClk(UINT nFlags, CPoint point)
 {
@@ -319,4 +273,52 @@ void CWatchDialog::OnBnClickedBtnLock()
 void CWatchDialog::OnBnClickedBtnUnlock()
 {
 	CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),8);
+}
+
+
+//接收ACK消息处理函数
+LRESULT CWatchDialog::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+{
+	if (lParam == -1 || (lParam == -2))//错误处理
+	{
+
+	}
+	else if (lParam == 1)//对方关闭了套接字
+	{
+
+	}
+	else
+	{
+		CPacket* pPacket = (CPacket*)wParam;
+		if (pPacket != NULL)
+		{
+			CPacket head = *(CPacket*)wParam;
+			delete (CPacket*)wParam;
+			switch (head.sCmd)
+			{
+			case 6://显示
+			{
+					CEdoyunTool::Bytes2Image(m_image, head.strData);
+					CRect rect;
+					m_picture.GetWindowRect(rect);//m_picture 的屏幕尺寸和位置存储在 rect 对象中
+					//pParent->GetImage().BitBlt(m_picture.GetDC()->GetSafeHdc(),0,0,SRCCOPY);
+					m_nObjWidth = m_image.GetWidth();//接收到截图的宽
+					m_nObjHeight = m_image.GetHeight();//接收到截图的高
+					m_image.StretchBlt(
+						m_picture.GetDC()->GetSafeHdc(), 0, 0, rect.Width(), rect.Height(), SRCCOPY);
+					m_picture.InvalidateRect(NULL);
+					m_image.Destroy();
+					m_isFull = false;
+				break;
+			}
+			case 5://鼠标
+			case 7:
+			case 8:
+			default:
+				break;
+			}
+		}
+	}
+
+	return 0;
 }
