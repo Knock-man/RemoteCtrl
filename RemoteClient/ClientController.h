@@ -51,10 +51,11 @@ public:
 		int nCmd, 
 		bool bAutoClose=true, 
 		BYTE* pData=NULL, 
-		size_t nLength=0)
+		size_t nLength=0,WPARAM wParam = 0)
 	{
 		CClientSocket* pClient = CClientSocket::getInstance();
-		return  pClient->SendPacket(hWnd,CPacket(nCmd, pData, nLength),bAutoClose);
+		  bool ret = pClient->SendPacket(hWnd,CPacket(nCmd, pData, nLength),bAutoClose, wParam);
+		  return ret;
 	}
 
 	//获得图片
@@ -73,12 +74,20 @@ public:
 		{
 			m_strRemote = strPath;//远程文件路径名
 			m_strLocal = dlg.GetPathName();//本地保存文件的文件名
-			//开启线程下载
-			m_hThreadDown = (HANDLE)_beginthread(&CClientController::threadDownloadFileEntry, 0, this);//开启线程
-			if (WaitForSingleObject(m_hThreadDown, 0) != WAIT_TIMEOUT)//线程开启失败
+			//打开保存文件
+			FILE* pFile = fopen(m_strLocal, "wb+");
+			if (pFile == NULL)//打开失败
 			{
+				AfxMessageBox(TEXT("本地没有权限保存该文件，或者文件无法创建!!!"));
 				return -1;
 			}
+			SendCommandPacket(m_remoteDlg, 4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength(), (WPARAM)pFile);
+			//开启线程下载
+			//m_hThreadDown = (HANDLE)_beginthread(&CClientController::threadDownloadFileEntry, 0, this);//开启线程
+			/*if (WaitForSingleObject(m_hThreadDown, 0) != WAIT_TIMEOUT)//线程开启失败
+			{
+				return -1;
+			}*/
 			m_remoteDlg.BeginWaitCursor();//开启沙漏
 			m_StatusDlg.m_info.SetWindowText(TEXT("命令正在执行中"));
 			m_StatusDlg.ShowWindow(SW_SHOW);//显示对话框
@@ -89,7 +98,12 @@ public:
 		
 		
 	}
-
+	void DownloadEnd()
+	{
+		m_StatusDlg.ShowWindow(SW_HIDE);
+		m_remoteDlg.EndWaitCursor();
+		m_remoteDlg.MessageBox(TEXT("下载完成!!"), TEXT("完成"));
+	}
 	void StartWatchScreen()
 	{
 		m_isClosed = false;

@@ -17,6 +17,15 @@ CClientSocket::CClientSocket() :
 		MessageBox(NULL, TEXT("无法初始化套接字错误,请检查网络设置"), TEXT("初始化错误"), MB_OK | MB_ICONERROR);
 		exit(0);
 	}
+
+	m_eventInvoke = CreateEvent(NULL, TRUE, FALSE, NULL);
+	m_hThread = (HANDLE)_beginthreadex(NULL, 0, &CClientSocket::threadEntry, this, 0, &m_nThreadID);//启动通信线程
+	if (WaitForSingleObject(m_eventInvoke, 100) == WAIT_TIMEOUT)
+	{
+		TRACE("网络消息处理线程启动失败了!\r\n");
+	}
+	CloseHandle(m_eventInvoke);
+
 	m_buffer.resize(BUFSIZE);
 	memset(m_buffer.data(), 0, BUFSIZE);
 	
@@ -145,16 +154,14 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
-bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed)
+bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed,WPARAM wParam)
 {
-	if (m_hThread == INVALID_HANDLE_VALUE)
-	{
-		m_hThread = (HANDLE)_beginthreadex(NULL,0,&CClientSocket::threadEntry,this,0,&m_nThreadID);
-	}
+	//向通信线程发送消息
 	UINT nMode = isAutoClosed ? CSM_AUTOCLOSE : 0;
 	std::string strOut;
 	pack.Data(strOut);
-	return PostThreadMessage(m_nThreadID, WM_SEND_PACK, (WPARAM)new PACKET_DATA(strOut.c_str(),strOut.size(),nMode),(LPARAM)hWnd);
+	bool ret = PostThreadMessage(m_nThreadID, WM_SEND_PACK, (WPARAM)new PACKET_DATA(strOut.c_str(),strOut.size(),nMode, wParam),(LPARAM)hWnd);
+	return ret;
 }
 
 /*
@@ -323,9 +330,11 @@ void CClientSocket::threadFunc()
 
 }
 */
-
+//通信线程
 void CClientSocket::threadFunc2()
 {
+	SetEvent(m_eventInvoke);//主线程在阻塞等待事件被唤醒(构造函数中)
+
 	MSG msg;
 	while (::GetMessage(&msg, NULL, 0, 0))
 	{
@@ -338,7 +347,7 @@ void CClientSocket::threadFunc2()
 		}
 	}
 }
-
+//通信处理函数
 void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	//消息数据结构（数据和数据长度,模式）
@@ -348,9 +357,11 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 	HWND hWnd = (HWND)lParam;
 	if (InitSocket() == true)
 	{	
+		//发送数据
 		int ret = send(m_sock, (char*)data.strData.c_str(), (int)data.strData.size(), 0);
 		if (ret > 0)
 		{
+			//接收数据
 			size_t index = 0;
 			std::string strBuffer;
 			strBuffer.resize(BUFSIZE);
@@ -365,7 +376,7 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 					CPacket pack((BYTE*)pBuffer, nLen);
 					if (nLen > 0)//解包成功
 					{
-						::SendMessage(hWnd, WM_SEND_PACK_ACK, (WPARAM)new CPacket(pack), 0);
+						::SendMessage(hWnd, WM_SEND_PACK_ACK, (WPARAM)new CPacket(pack), data.wParam);//wParam为附加参数
 						if (data.nMode & CSM_AUTOCLOSE)//短连接自动关闭
 						{
 							CloseSocket();
@@ -450,7 +461,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 	{
 		sum += BYTE(strData[j]) & 0xFF;//只取字符低八位
 	}
-	TRACE("[客户端] sHead=%d nLength=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, strData.c_str(), sSum, sum);
+	TRACE("[客户端] sHead=%d nLength=%d sCmd=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, sCmd, strData.c_str(), sSum, sum);
 	if (sum == sSum)
 	{
 		nSize =i;

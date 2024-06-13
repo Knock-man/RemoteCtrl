@@ -104,6 +104,7 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS_SERV, &CRemoteClientDlg::OnIpnFieldchangedIpaddressServ)
 	ON_EN_CHANGE(IDC_EDIT_PORT, &CRemoteClientDlg::OnEnChangeEditPort)
+	ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketAck)
 END_MESSAGE_MAP()
 
 
@@ -141,7 +142,7 @@ BOOL CRemoteClientDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	UpdateData();//从对话框的控件中检索数据到成员变量
 	IP_PORT = TEXT("9527");//端口	//默认窗口的地址
-	IP_Address = 0xC0A83482;//ip
+	IP_Address = 0xC0A83487;//ip
 	//刷新IP PORT
 	CClientController* pController = CClientController::getInstance();
 	pController->UpdateAddress(IP_Address, atoi((LPCTSTR)IP_PORT));
@@ -213,34 +214,11 @@ void CRemoteClientDlg::OnBnClickedBtnTest()
 void CRemoteClientDlg::OnBnClickedBtnFileinfo()
 {
 	//发送查看磁盘分区请求
-	std::list<CPacket> lstPackets;
-	int ret = CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),1,true,NULL,0);
-	if (ret == -1||(lstPackets.size()<=0))
+	bool ret = CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),1,true,NULL,0);
+	if (ret == 0)
 	{
 		AfxMessageBox(TEXT("命令处理失败"));
 		return;
-	}
-	CPacket& head = lstPackets.front();
-	//获取磁盘分区名称
-	std::string drivers = head.strData;//拿到磁盘盘符名称
-
-	//磁盘分区插入到树中
-	std::string dr;
-	m_Tree.DeleteAllItems();//清空树
-	//"C,D"
-	for (size_t i = 0; i < drivers.size()+1; i++)
-	{
-		if (drivers[i] == ','||i== (drivers.size()))
-		{
-			dr += ":";
-			HTREEITEM hTmp = m_Tree.InsertItem(dr.c_str(),TVI_ROOT,TVI_LAST);//树中插入一项
-			m_Tree.InsertItem("", hTmp, TVI_LAST);// // 在新插入的项下插入一个空项
-			dr.clear();
-			continue;
-			//TVI_LAST：表示将新项插入到其同级项的末尾。
-		}
-		dr += drivers[i];
-		//TRACE("%s\r\n", dr.c_str());
 	}
 	
 }
@@ -299,36 +277,11 @@ void CRemoteClientDlg::LoadFileInfo()
 
 	//获得完整的路径信息 D:\C\xbj\shixi
 	CString strPath = Getpath(hTreeSelected);
-	std::list<CPacket>lstPackets;
 	//TRACE("path=%s\r\n", strPath);
 
 	//TRACE("发送路径:[%s]",strPath);
 	//发送查看目录下所有文件请求
-	int nCmd=CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
-	if (lstPackets.size())
-	{
-		std::list<CPacket>::iterator it = lstPackets.begin();
-		for (; it != lstPackets.end(); it++)
-		{
-			PFILEINFO pInfo = (PFILEINFO)(*it).strData.c_str();
-			if (pInfo->HasNext == FALSE)continue;//结束
-			if (pInfo->IsDirectory)//是目录
-			{
-				if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
-				{//防止死递归,忽略
-					continue;
-				}
-				//树种显示目录
-				HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, hTreeSelected, TVI_LAST);
-				m_Tree.InsertItem("", hTemp, TVI_LAST);
-			}
-			else
-			{
-				//List中显示文件
-				m_List.InsertItem(0, pInfo->szFileName);
-			}
-		}
-	}
+	int nCmd=CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength(), (WPARAM)hTreeSelected);
 }
 
 //获得hTree节点 完整路径信息 D:\C\xbj\shixi
@@ -501,4 +454,117 @@ void CRemoteClientDlg::OnEnChangeEditPort()
 	UpdateData();
 	CClientController* pController = CClientController::getInstance();
 	pController->UpdateAddress(IP_Address, atoi((LPCTSTR)IP_PORT));
+}
+
+LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+{
+	if (lParam == -1 || (lParam == -2))//错误处理
+	{
+
+	}
+	else if (lParam == 1)//对方关闭了套接字
+	{
+
+	}
+	else
+	{
+		if (wParam != NULL)
+		{
+			CPacket head = *(CPacket*)wParam;
+			delete (CPacket*)wParam;
+
+			switch (head.sCmd)
+			{
+			case 1://获取驱动信息
+			{
+				
+				//获取磁盘分区名称
+				std::string drivers = head.strData;//拿到磁盘盘符名称
+
+				//磁盘分区插入到树中
+				std::string dr;
+				m_Tree.DeleteAllItems();//清空树
+				//"C,D"
+				for (size_t i = 0; i < drivers.size() + 1; i++)
+				{
+					if (drivers[i] == ',' || i == (drivers.size()))
+					{
+						dr += ":";
+						HTREEITEM hTmp = m_Tree.InsertItem(dr.c_str(), TVI_ROOT, TVI_LAST);//树中插入一项
+						m_Tree.InsertItem("", hTmp, TVI_LAST);// // 在新插入的项下插入一个空项
+						dr.clear();
+						continue;
+						//TVI_LAST：表示将新项插入到其同级项的末尾。
+					}
+					dr += drivers[i];
+					//TRACE("%s\r\n", dr.c_str());
+				}
+
+			}
+			break;
+			case 2://文件信息
+			{
+				PFILEINFO pInfo = (PFILEINFO)head.strData.c_str();
+				if (pInfo->HasNext == FALSE)break;//结束
+				if (pInfo->IsDirectory)//是目录
+				{
+					if (CString(pInfo->szFileName) == "." || CString(pInfo->szFileName) == "..")
+					{//防止死递归,忽略
+						break;
+					}
+					//树中显示目录
+					HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, (HTREEITEM)lParam, TVI_LAST);
+					m_Tree.InsertItem("", hTemp, TVI_LAST);
+				}
+				else
+				{
+					//List中显示文件
+					m_List.InsertItem(0, pInfo->szFileName);
+				}
+			}
+			break;
+			case 3://运行文件
+				TRACE("run file done!\r\n");
+				break;
+			case 4://下载文件
+			{
+				static LONGLONG length = 0, index = 0;
+				//length文件长度   index 已经写入长度
+				if (length == 0)//文件长度为0
+				{
+					length = *(long long*)head.strData.c_str();
+					if (length == 0)
+					{
+						AfxMessageBox("文件长度为零或者无法读取文件!!!");
+						CClientController::getInstance()->DownloadEnd();//结束下载
+						break;
+					}
+				}
+				else if (length > 0 && (index >= length))//文件全部写入完成
+				{
+					fclose((FILE*)lParam);//关闭文件
+					length = 0;
+					index = 0;
+					CClientController::getInstance()->DownloadEnd();//结束下载
+				}
+				else
+				{
+					FILE* pFile = (FILE*)lParam;
+					fwrite(head.strData.c_str(), 1, head.strData.size(), pFile);
+					index += head.strData.size();
+				}
+			}
+			case 9://删除文件
+				TRACE("delete file done!\r\n");
+				break;
+			case 1981:
+				TRACE("test connection success!\r\n");
+				break;
+			default:
+				TRACE("unknow data received!%d\r\n", head.sCmd);
+				break;
+			}
+		}
+	}
+	return 0;
 }

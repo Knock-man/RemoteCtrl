@@ -60,22 +60,26 @@ enum {
 typedef struct PacketData{
 	std::string strData;//数据
 	UINT nMode;//模式
-	PacketData(const char* pData, size_t nLen, UINT mode)
+	WPARAM wParam;
+	PacketData(const char* pData, size_t nLen, UINT mode,WPARAM nParam=0)
 	{
 		strData.resize(nLen);
 		memcpy((char*)strData.c_str(), pData, nLen);
 		nMode = mode;
+		wParam = nParam;
 	}
 	PacketData(const PacketData& data)
 	{
 		strData = data.strData;
 		nMode = data.nMode;
+		wParam = data.wParam;
 	}
 	PacketData& operator=(const PacketData& data)
 	{
 		if (this != &data) {
 			strData = data.strData;
 			nMode = data.nMode;
+			wParam = data.wParam;
 		}
 		return *this;
 	}
@@ -113,7 +117,7 @@ public:
 	int DealCommand();
 
 	//bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
-	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true);
+	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true,WPARAM wParam = 0);
 
 	//获取文件列表
 	bool GetFilePath(std::string& strPath);
@@ -133,7 +137,7 @@ public:
 private:
 	typedef void(CClientSocket::* MSGFUNC)(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	std::map<UINT, MSGFUNC> m_mapFunc;
-
+	HANDLE m_eventInvoke;//启动事件
 	UINT m_nThreadID;
 	HANDLE m_hThread;
 	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表

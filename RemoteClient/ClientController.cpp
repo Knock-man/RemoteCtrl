@@ -20,7 +20,7 @@ void CClientController::threadDownloadFile()
     CClientSocket* pClient = CClientSocket::getInstance();
     do {
         //网络模块发送下载文件请求
-        int ret = SendCommandPacket(m_remoteDlg,4, false,(BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength());
+        int ret = SendCommandPacket(m_remoteDlg,4, false,(BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength(),(WPARAM)pFile);
         if (ret < 0)
         {
             {
