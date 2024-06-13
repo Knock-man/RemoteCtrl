@@ -33,12 +33,16 @@ private:
 
 	
 private:
+	void DealCommand(WORD nCmd,const std::string& strData, LPARAM lParam);
+	void InitUIData();
 	CString Getpath(HTREEITEM hTree);
 	void DeleteTreeChildrenItem(HTREEITEM hTree);
 	void Dump(BYTE* pData, size_t nSize);
 	void LoadFileInfo();
 	void LoadFileCurrent();
-
+	void Str2Tree(const std::string& driver, CTreeCtrl& tree);
+	void UpdateFIleInfo(const FILEINFO& finfo, HTREEITEM hParent);
+	void UpdateDownloadFile(const std::string& strData, FILE* pFile);
 // 实现
 protected:
 	DECLARE_MESSAGE_MAP()//声明宏

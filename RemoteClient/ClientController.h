@@ -7,8 +7,7 @@
 #include "StatusDlg.h"
 #include <map>
 
-#define WM_SEND_PACK (WM_USER+1)//发送包数据
-#define WM_SEND_DATA (WM_USER+2)//发送数据
+//#define WM_SEND_DATA (WM_USER+2)//发送数据
 #define WM_SHOW_STATUS (WM_USER+3)//展示状态
 #define WM_SHOW_WATCH (WM_USER+4)//远程监控
 #define WM_SEND_MESSAGE (WM_USER+0x1000)//自定义消息处理
@@ -27,9 +26,6 @@ public:
 
 	//启动
 	int Invoke(CWnd*& m_pMainWnd);
-
-	//发送消息
-	LRESULT SendMessage(MSG msg);
 
 	//更新网络服务器地址
 	void UpdateAddress(int nIP, int nPort)
@@ -82,12 +78,7 @@ public:
 				return -1;
 			}
 			SendCommandPacket(m_remoteDlg, 4, false, (BYTE*)(LPCSTR)m_strRemote, m_strRemote.GetLength(), (WPARAM)pFile);
-			//开启线程下载
-			//m_hThreadDown = (HANDLE)_beginthread(&CClientController::threadDownloadFileEntry, 0, this);//开启线程
-			/*if (WaitForSingleObject(m_hThreadDown, 0) != WAIT_TIMEOUT)//线程开启失败
-			{
-				return -1;
-			}*/
+			
 			m_remoteDlg.BeginWaitCursor();//开启沙漏
 			m_StatusDlg.m_info.SetWindowText(TEXT("命令正在执行中"));
 			m_StatusDlg.ShowWindow(SW_SHOW);//显示对话框
@@ -115,10 +106,6 @@ public:
 		WaitForSingleObject(m_hThreadWatch, 500);
 	}
 protected:
-	//下载文件线程
-	void threadDownloadFile();
-	static void threadDownloadFileEntry(void* arg);
-
 	//监控线程
 	void threadWatchScreen();
 	static void threadWatchScreenEntry(void* arg);
@@ -146,8 +133,6 @@ protected:
 	}
 
 	//消息处理函数
-	//LRESULT OnSendPack(UINT nMsg, WPARAM wParam, LPARAM lParam);
-	//LRESULT OnSendData(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSendStatus(UINT nMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSendWatcher(UINT nMsg, WPARAM wParam, LPARAM lParam);
 private:
@@ -191,7 +176,6 @@ private:
 	//线程相关
 	HANDLE m_hThread;
 	unsigned int m_nThreadID;
-	HANDLE m_hThreadDown;
 	HANDLE m_hThreadWatch;
 
 	//下载文件的远程路径
