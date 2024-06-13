@@ -515,6 +515,7 @@ LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
 					//树中显示目录
 					HTREEITEM hTemp = m_Tree.InsertItem(pInfo->szFileName, (HTREEITEM)lParam, TVI_LAST);
 					m_Tree.InsertItem("", hTemp, TVI_LAST);
+					m_Tree.Expand((HTREEITEM)lParam, TVE_EXPAND);//展开选项
 				}
 				else
 				{
@@ -533,7 +534,7 @@ LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
 				if (length == 0)//文件长度为0
 				{
 					length = *(long long*)head.strData.c_str();
-					if (length == 0)
+					if (length == 0 && head.nLength>4)//防止服务器结束标记包会弹框
 					{
 						AfxMessageBox("文件长度为零或者无法读取文件!!!");
 						CClientController::getInstance()->DownloadEnd();//结束下载
@@ -547,13 +548,21 @@ LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
 					index = 0;
 					CClientController::getInstance()->DownloadEnd();//结束下载
 				}
-				else
+				else//写入文件
 				{
 					FILE* pFile = (FILE*)lParam;
 					fwrite(head.strData.c_str(), 1, head.strData.size(), pFile);
 					index += head.strData.size();
+					if (index >= length)
+					{
+						fclose((FILE*)lParam);//关闭文件
+						length = 0;
+						index = 0;
+						CClientController::getInstance()->DownloadEnd();//结束下载
+					}
 				}
 			}
+			break;
 			case 9://删除文件
 				TRACE("delete file done!\r\n");
 				break;

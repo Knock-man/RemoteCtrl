@@ -360,6 +360,9 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 	PACKET_DATA data = *(PACKET_DATA*)wParam;
 	delete (PACKET_DATA*)wParam;
 	HWND hWnd = (HWND)lParam;
+	//size_t nTemp = data.strData.size();
+	//CPacket current((BYTE*)data.strData.c_str(),nTemp);
+	
 	if (InitSocket() == true)
 	{	
 		//发送数据
@@ -387,9 +390,10 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 							CloseSocket();
 							return;
 						}
+						index -= nLen;
+						memmove(pBuffer, pBuffer + nLen, index);
 					}
-					index -= nLen;
-					memmove(pBuffer, pBuffer + index, nLen);
+					
 				}
 				else//关闭套接字或者网络异常
 				{
