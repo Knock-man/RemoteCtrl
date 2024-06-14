@@ -48,6 +48,9 @@
     <ClInclude Include="CEdoyunTool.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RemoteClient.cpp">
@@ -69,6 +72,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ClientController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

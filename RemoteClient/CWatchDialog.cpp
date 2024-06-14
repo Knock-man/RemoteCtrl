@@ -53,10 +53,11 @@ END_MESSAGE_MAP()
 
 CPoint CWatchDialog::UserPointToRemoteScreenPoint(CPoint& point,bool isScreen)
 {
-	CRect clientRect;
-	if (!isScreen)ClientToScreen(&point);
-	m_picture.ScreenToClient(&point);//屏幕坐标转为客户区坐标
 	
+	if (!isScreen)ClientToScreen(&point);//客户区坐标转为屏幕坐标
+	m_picture.ScreenToClient(&point);//屏幕坐标转为图片客户区坐标
+	
+	CRect clientRect;
 	m_picture.GetWindowRect(clientRect);//获取图片控件的客户区域信息
 	//本地坐标，到远程坐标
 	int width0 = clientRect.Width();//客户区宽
@@ -312,8 +313,8 @@ LRESULT CWatchDialog::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 5://鼠标
-			case 7:
-			case 8:
+			case 7://锁机
+			case 8://解锁
 			default:
 				break;
 			}

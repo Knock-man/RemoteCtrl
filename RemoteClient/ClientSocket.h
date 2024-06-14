@@ -1,131 +1,40 @@
 #pragma once
-#include"framework.h"
-#include"pch.h"
-#include "string"
+#include "framework.h"
+#include "pch.h"
+#include <string>
+#include "Packet.h"
 #include<list>
 #include<map>
 #include <vector>
 #include<mutex>
 #define BUFSIZE 4096000
 #define PORT 9527
-#define WM_SEND_PACK (WM_USER+1) //发送包数据
-#define WM_SEND_PACK_ACK (WM_USER+2) //发送包数据应答
+#define WM_SEND_PACK (WM_USER+1) //发送包数据 消息
+#define WM_SEND_PACK_ACK (WM_USER+2) //发送包数据应答 消息
 
-#pragma pack(push)
-#pragma pack(1)
-//包 [包头2 包长度4 控制命令2 包数据 和校验2]
-class CPacket
-{
-public:
-	CPacket();
-	CPacket(const BYTE* pData, size_t& nSize);//解包
-	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
-	CPacket(const CPacket& pack);
-	CPacket& operator=(const CPacket& pack);
-	~CPacket();
-
-	int size();//包大小
-	const char* CPacket::Data(std::string& strOut) const;//包
-
-public:
-	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
-	WORD sHead;//包头 FEFF  
-	DWORD nLength;//包长度（从控制命令开始，到和校验结束） 
-	WORD sCmd;//控制命令
-	std::string strData;//包数据
-	WORD sSum;//和校验
-};
-#pragma pack(pop)
-//文件信息结构体
-typedef struct file_info
-{
-	file_info()
-	{
-		IsInvalid = false;//默认为有效文件
-		IsDirectory = -1;
-		HasNext = TRUE;
-		memset(szFileName, 0, sizeof(szFileName));
-	}
-	BOOL IsInvalid;//是否有效
-	BOOL IsDirectory;//文件类型 0文件 1目录
-	BOOL HasNext;//是否还有后续 0没有 1有
-	char szFileName[256];//文件名
-}FILEINFO, * PFILEINFO;
-
-
-enum {
-	CSM_AUTOCLOSE = 1,//CSM = Client SOCKET Mode 自动关闭模式
-};
-
-typedef struct PacketData{
-	std::string strData;//数据
-	UINT nMode;//模式
-	WPARAM wParam;
-	PacketData(const char* pData, size_t nLen, UINT mode,WPARAM nParam=0)
-	{
-		strData.resize(nLen);
-		memcpy((char*)strData.c_str(), pData, nLen);
-		nMode = mode;
-		wParam = nParam;
-	}
-	PacketData(const PacketData& data)
-	{
-		strData = data.strData;
-		nMode = data.nMode;
-		wParam = data.wParam;
-	}
-	PacketData& operator=(const PacketData& data)
-	{
-		if (this != &data) {
-			strData = data.strData;
-			nMode = data.nMode;
-			wParam = data.wParam;
-		}
-		return *this;
-	}
-}PACKET_DATA;
-
-
-//鼠标结构体
-typedef struct MouseEvent
-{
-	MouseEvent()
-	{
-		nAction = 0;
-		nButton = -1;
-		ptXY.x = 0;
-		ptXY.y = 0;
-	}
-	WORD nAction;//点击、移动、双击
-	WORD nButton;//左键、右键、滚轮
-	POINT ptXY;//坐标
-}MOUSEEV, * PMOUSEEV;
-
+//网络通信类
 class CClientSocket
 {
 public:
 	//获取单例实例接口
 	static CClientSocket* getInstance();
 
-
 	//套接字初始化
 	bool CClientSocket::InitSocket();
 
+	//关闭
 	void CloseSocket();
 
 	//接收消息
 	int DealCommand();
 
 	//bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
-	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true,WPARAM wParam = 0);
+	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true, WPARAM wParam = 0);
 
-	//获取文件列表
-	bool GetFilePath(std::string& strPath);
-
-	bool GetMouseEvent(MOUSEEV& mouse);
-
+	//获取数据包
 	CPacket& GetPacket();
 
+	//更新网络地址
 	void UpdateAddress(int nIP, int nPort)
 	{
 		if ((m_nIP != nIP) || (m_nPort != nPort))//修改了 IP 端口
@@ -135,26 +44,33 @@ public:
 		}		
 	}
 private:
+	//函数指针 指向消息函数
 	typedef void(CClientSocket::* MSGFUNC)(UINT nMsg, WPARAM wParam, LPARAM lParam);
+
+	//容器
 	std::map<UINT, MSGFUNC> m_mapFunc;
+	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表
+	std::map<HANDLE, std::list<CPacket>&> m_mapAck;//接收结果映射表
+	std::list<CPacket>m_lstSend;//发送队列
+
 	HANDLE m_eventInvoke;//启动事件
 	UINT m_nThreadID;
 	HANDLE m_hThread;
-	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表
+	
 	bool m_bAutoClose;//长短连接
 	std::mutex m_lock;
-	std::list<CPacket>m_lstSend;//发送队列
-	std::map<HANDLE, std::list<CPacket>&> m_mapAck;//接收结果映射表
+	
+	
 	int m_nIP;//地址
 	int m_nPort;//端口
 private:
 	//套接字
 	SOCKET m_sock;
 
-
 	//数据包
 	CPacket m_packet;
 
+	//缓冲区
 	std::vector<char> m_buffer;
 
 	//构造
@@ -170,12 +86,15 @@ private:
 	BOOL InitSockEnv();
 
 	//发送消息
-	bool Send(const void* pData, size_t nSize);
+	//bool Send(const void* pData, size_t nSize);
 	bool Send(const CPacket& pack);
 
-	void SendPack(UINT nMsg, WPARAM wParam/*缓冲区的值*/, LPARAM lParam/*缓冲区的长度*/);
-	static unsigned _stdcall threadEntry(void* arg);
 	//void threadFunc();
-	void threadFunc2();
+	static unsigned _stdcall threadEntry(void* arg);
+	void threadFunc2();//消息循环
 
+	//消息函数  WM_SEND_PACK消息激活
+	void SendPack(UINT nMsg, WPARAM wParam/*缓冲区的值*/, LPARAM lParam/*缓冲区的长度*/);
+	
+	
 };

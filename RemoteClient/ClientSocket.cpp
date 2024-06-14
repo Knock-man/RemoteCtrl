@@ -19,6 +19,9 @@ CClientSocket::CClientSocket() :
 	}
 
 	m_eventInvoke = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (m_eventInvoke == NULL) {
+		TRACE("创建事件失败!\r\n");
+	}
 	m_hThread = (HANDLE)_beginthreadex(NULL, 0, &CClientSocket::threadEntry, this, 0, &m_nThreadID);//启动通信线程
 	if (WaitForSingleObject(m_eventInvoke, 100) == WAIT_TIMEOUT)
 	{
@@ -154,13 +157,13 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
-bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed,WPARAM wParam)
+bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed, WPARAM AttParam)
 {
 	//向通信线程发送消息
 	UINT nMode = isAutoClosed ? CSM_AUTOCLOSE : 0;
 	std::string strOut;
-	pack.Data(strOut);
-	PACKET_DATA* pData = new PACKET_DATA(strOut.c_str(), strOut.size(), nMode, wParam);
+	pack.Data(strOut);//pack格式化为字符串
+	PACKET_DATA* pData = new PACKET_DATA(strOut.c_str(), strOut.size(), nMode, AttParam);
 	bool ret = PostThreadMessage(m_nThreadID, WM_SEND_PACK, (WPARAM)pData,(LPARAM)hWnd);
 	if (ret == false)
 	{
@@ -200,11 +203,11 @@ bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,
 
 
 //发送
-bool CClientSocket::Send(const void* pData, size_t nSize)
-{
-	if (m_sock == -1)return false;
-	return send(m_sock, (const char*)pData, nSize, 0) > 0;
-}
+//bool CClientSocket::Send(const void* pData, size_t nSize)
+//{
+//	if (m_sock == -1)return false;
+//	return send(m_sock, (const char*)pData, nSize, 0) > 0;
+//}
 
 bool CClientSocket::Send(const CPacket& pack)
 {
@@ -215,26 +218,6 @@ bool CClientSocket::Send(const CPacket& pack)
 	return send(m_sock, strOut.c_str(), strOut.size(), 0) > 0;
 }
 
-bool CClientSocket::GetFilePath(std::string& strPath)
-{
-	if ((m_packet.sCmd == 2) || (m_packet.sCmd == 3) || (m_packet.sCmd == 4))
-	{
-		strPath = m_packet.strData;
-		return true;
-	}
-	return false;
-}
-
-//获取鼠标事件
-bool CClientSocket::GetMouseEvent(MOUSEEV& mouse)
-{
-	if (m_packet.sCmd == 5)
-	{
-		memcpy(&mouse, m_packet.strData.c_str(), sizeof(MOUSEEV));
-		return true;
-	}
-	return false;
-}
 
 //网络环境初始化
 BOOL  CClientSocket::InitSockEnv() {
@@ -340,6 +323,7 @@ void CClientSocket::threadFunc2()
 {
 	SetEvent(m_eventInvoke);//主线程在阻塞等待事件被唤醒(构造函数中)
 
+	//消息循环 等待发送包事件
 	MSG msg;
 	while (::GetMessage(&msg, NULL, 0, 0))
 	{
@@ -352,7 +336,7 @@ void CClientSocket::threadFunc2()
 		}
 	}
 }
-//通信处理函数
+//通信处理函数 wParam:数据  lParam:回调窗口句柄
 void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
 	//消息数据结构（数据和数据长度,模式）
@@ -360,8 +344,6 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 	PACKET_DATA data = *(PACKET_DATA*)wParam;
 	delete (PACKET_DATA*)wParam;
 	HWND hWnd = (HWND)lParam;
-	//size_t nTemp = data.strData.size();
-	//CPacket current((BYTE*)data.strData.c_str(),nTemp);
 	
 	if (InitSocket() == true)
 	{	
@@ -384,7 +366,8 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 					CPacket pack((BYTE*)pBuffer, nLen);
 					if (nLen > 0)//解包成功
 					{
-						::SendMessage(hWnd, WM_SEND_PACK_ACK, (WPARAM)new CPacket(pack), data.wParam);//wParam为附加参数
+						//将收到的包通过消息发送到指定窗口 
+						::SendMessage(hWnd, WM_SEND_PACK_ACK, (WPARAM)new CPacket(pack), data.AttParam);//wParam为附加参数
 						if (data.nMode & CSM_AUTOCLOSE)//短连接自动关闭
 						{
 							CloseSocket();
@@ -413,137 +396,3 @@ void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 		::SendMessage(hWnd, WM_SEND_PACK_ACK, NULL, -2);
 	}
 }
-
-
-
-//包类
-
-CPacket::CPacket() :sHead(0), nLength(0), sCmd(0), sSum(0)
-{
-
-}
-//解析包
-CPacket::CPacket(const BYTE* pData, size_t& nSize)
-{
-	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
-	size_t i = 0;
-	//取包头位
-	for (; i < nSize; i++)
-	{
-		if ((*(WORD*)(pData + i)) == 0xFEFF)//找到包头
-		{
-			sHead = *(WORD*)(pData + i);
-			i += 2;
-			break;
-		}
-	}
-	
-	if ((i + 4 + 2 + 2) > nSize)//包数据不全 只有 [包头 包长度 控制命令 和校验]  没有数据段 解析失败
-	{
-		nSize = 0;
-		return;
-	}
-
-	//取包长度位
-	nLength = *(DWORD*)(pData + i); i += 4;
-	if (nLength + i > nSize)//包未完全接收到 nLength+sizeof(包头)+sizeof(包长度) pData缓冲区越界了
-	{
-		nSize = 0;
-		return;
-	}
-
-	//取出控制命令位
-	sCmd = *(WORD*)(pData + i); i += 2;
-
-	//保存数据段
-	if (nLength > 4)
-	{
-		strData.resize(nLength-2-2);//nLength - [控制命令位长度] - [校验位长度]
-		memcpy((void*)strData.c_str(), pData + i, nLength-4);
-		i = i + nLength - 2 - 2;
-	}
-
-	//取出校验位 并校验
-	sSum = *(WORD*)(pData + i); i += 2;
-	WORD sum = 0;
-	for (size_t j = 0; j < strData.size(); j++)
-	{
-		sum += BYTE(strData[j]) & 0xFF;//只取字符低八位
-	}
-	TRACE("[客户端] sHead=%d nLength=%d sCmd=%d data=[%s]  sSum=%d  sum = %d\r\n", sHead, nLength, sCmd, strData.c_str(), sSum, sum);
-	if (sum == sSum)
-	{
-		nSize =i;
-		return;
-	}
-	nSize = 0;
-}
-//打包：封装成包
-CPacket::CPacket(WORD nCmd, const BYTE* pData, size_t nSize)
-{
-	sHead = 0xFEFF;
-	nLength = nSize + 4;
-	sCmd = nCmd;
-
-
-	if (nSize > 0)//有数据段
-	{
-		//打包数据段
-		strData.resize(nSize);
-		memcpy((void*)strData.c_str(), pData, nSize);
-	}
-	else//无数据段
-	{
-		strData.clear();
-	}
-
-	//打包检验位
-	sSum = 0;
-	for (size_t j = 0; j < strData.size(); j++)
-	{
-		sSum += BYTE(strData[j]) & 0xFF;//只取字符低八位
-	}
-}
-CPacket::CPacket(const CPacket& pack)
-{
-	sHead = pack.sHead;
-	nLength = pack.nLength;
-	sCmd = pack.sCmd;
-	strData = pack.strData;
-	sSum = pack.sSum;
-}
-CPacket& CPacket::operator=(const CPacket& pack)
-{
-	if (this != &pack)
-	{
-		sHead = pack.sHead;
-		nLength = pack.nLength;
-		sCmd = pack.sCmd;
-		strData = pack.strData;
-		sSum = pack.sSum;
-	}
-	return *this;
-
-}
-CPacket::~CPacket()
-{
-
-}
-
-int CPacket::size()
-{
-	return nLength + 6;
-}
-
-const char* CPacket::Data(std::string& strOut) const
-{
-	strOut.resize(nLength + 6);
-	BYTE* pData = (BYTE*)strOut.c_str();
-	*(WORD*)pData = sHead;
-	*(WORD*)(pData + 2) = nLength;
-	*(WORD*)(pData + 2 + 4) = sCmd;
-	memcpy(pData + 2 + 4 + 2, strData.c_str(), strData.size());
-	*(WORD*)(pData + 2 + 4 + 2 + strData.size()) = sSum;
-	return strOut.c_str();
-}
-
