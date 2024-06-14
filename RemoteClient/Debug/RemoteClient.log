@@ -1,1 +1,14 @@
-﻿  RemoteClient.vcxproj -> C:\Users\xbj\Desktop\MFC学习\RemoteCtrl\Debug\RemoteClient.exe
+﻿  pch.cpp
+  ClientController.cpp
+  ClientSocket.cpp
+  CWatchDialog.cpp
+  Packet.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\Packet.cpp(130,24): warning C4244: “=”: 从“const DWORD”转换到“WORD”，可能丢失数据
+  (编译源文件“/Packet.cpp”)
+  
+  RemoteClient.cpp
+  RemoteClientDlg.cpp
+  StatusDlg.cpp
+  正在生成代码...
+  LINK : 没有找到 C:\Users\xbj\Desktop\远控\RemoteCtrl\Debug\RemoteClient.exe 或上一个增量链接没有生成它；正在执行完全链接
+  RemoteClient.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\Debug\RemoteClient.exe
