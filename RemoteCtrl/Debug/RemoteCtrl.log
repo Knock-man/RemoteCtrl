@@ -1,2 +1,18 @@
 ﻿  RemoteCtrl.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\RemoteCtrl.cpp(58,14): warning C4114: 多次使用同一类型限定符
+  (编译源文件“/RemoteCtrl.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(149,9): warning C4551: 缺少参数列表的函数调用
+  (编译源文件“/RemoteCtrl.cpp”)
+  C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(149,9):
+  模板实例化上下文(最早的实例化上下文)为
+  	C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\RemoteCtrl.cpp(135,31):
+  	查看对正在编译的 类 模板 实例化“CEdoyunQueue<std::string>”的引用
+  	C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(146,17):
+  	在编译 类 模板 成员函数“void CEdoyunQueue<std::string>::threadEntry(void *)”时
+  		C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(49,23):
+  		请参阅 "CEdoyunQueue<std::string>::CEdoyunQueue" 中对 "CEdoyunQueue<std::string>::threadEntry" 的第一个引用
+  		C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\RemoteCtrl.cpp(135,31):
+  		请参阅 "main" 中对 "CEdoyunQueue<std::string>::CEdoyunQueue" 的第一个引用
+  
   RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\Debug\RemoteCtrl.exe

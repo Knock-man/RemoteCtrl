@@ -108,7 +108,7 @@ public:
 //设置开机自启：修改注册表方式(登录过程中启动) 
 //开机自启注册表位置：计算机\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
     static int WriteRefisterTable(const CString SystemPath) {
-        if (PathFileExists(SystemPath))return 0;//注册表中已经存在
+        if (PathFileExists(SystemPath))return 0;//文件已经存在
 
         //可执行文件复制到系统变量文件中
         char exePath[MAX_PATH] = "";//当前可执行文件路径
@@ -145,12 +145,13 @@ public:
 
     //设置开机自启：写入自启动文件夹方式（用户登录之后启动）
     //自启文件夹打开方式：win+R 输入:shell:startup
-    static int WriteStartupDir(const CString& strPath)
+    static int WriteStartupDir(const CString& startupPath)
     {
-        TCHAR strCmd[MAX_PATH] = TEXT("");
-        GetModuleFileName(NULL, strCmd, MAX_PATH);//获取可执行文件路径
+        if (PathFileExists(startupPath))return 0;//文件已经存在
+        TCHAR exePath[MAX_PATH] = TEXT("");
+        GetModuleFileName(NULL, exePath, MAX_PATH);//获取可执行文件路径
 
-        BOOL ret = CopyFile(strCmd, strPath, FALSE);//可执行文件放到开机自启文件夹中
+        BOOL ret = CopyFile(exePath, startupPath, FALSE);//可执行文件放到开机自启文件夹中
         if (ret == FALSE)
         {
             MessageBox(NULL, TEXT("复制文件夹失败，是否权限不足?\r\n"), TEXT("错误"), MB_ICONERROR | MB_TOPMOST);

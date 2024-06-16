@@ -191,7 +191,7 @@ CPacket& CServerSocket::GetPacket()
 //网络环境初始化
 BOOL  CServerSocket::InitSockEnv() {
 	WSAData data;
-	if (WSAStartup(MAKEWORD(1, 1), &data))
+	if (WSAStartup(MAKEWORD(2,0), &data))
 	{
 		return FALSE;
 	}
