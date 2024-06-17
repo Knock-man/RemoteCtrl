@@ -51,7 +51,7 @@
     <ClInclude Include="EdoyunServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Thread.h">
+    <ClInclude Include="EdoyunThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

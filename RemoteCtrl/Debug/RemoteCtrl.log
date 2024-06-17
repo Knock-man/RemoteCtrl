@@ -1,18 +1,19 @@
-﻿  pch.cpp
-  CEdoyunQueue.cpp
-  CEdoyunTool.cpp
-  Command.cpp
-  EdoyunServer.cpp
-  LockDialog.cpp
-  Packet.cpp
-  RemoteCtrl.cpp
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001: 内部编译器错误。
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001: (编译器文件“D:\a\_work\1\s\src\vctools\Compiler\CxxFE\sl\p1\c\error.h”，第 1291 行)
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001:  要解决此问题，请尝试简化或更改上面所列位置附近的程序。
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001: 如果可以，请在此处提供重现步骤: https://developercommunity.visualstudio.com 
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001: 请选择 Visual C++
-C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.h(120,1): error C1001: “帮助”菜单上的“技术支持”命令，或打开技术支持帮助文件来获得详细信息。
-  (编译源文件“/RemoteCtrl.cpp”)
+﻿  EdoyunServer.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(221,1): warning C4407: 在指向成员表示形式的不同指针之间进行强制转换，编译器可能生成不正确的代码
+  (编译源文件“/EdoyunServer.cpp”)
+  C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(221,1):
+  模板实例化上下文(最早的实例化上下文)为
+  	C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(291,45):
+  	查看对正在编译的 类 模板 实例化“EdoyunSendQueue<std::vector<char,std::allocator<char>>>”的引用
+  	C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\CEdoyunQueue.h(217,2):
+  	在编译 类 模板 成员函数“EdoyunSendQueue<std::vector<char,std::allocator<char>>>::EdoyunSendQueue(ThreadFuncBase *,int (__thiscall ThreadFuncBase::* )(T &))”时
+          with
+          [
+              T=std::vector<char,std::allocator<char>>
+          ]
+  		C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteCtrl\EdoyunServer.cpp(63,11):
+  		请参阅 "EdoyunClient::EdoyunClient" 中对 "EdoyunSendQueue<std::vector<char,std::allocator<char>>>::EdoyunSendQueue" 的第一个引用
   
-  ServerSocket.cpp
+  RemoteCtrl.cpp
   正在生成代码...
+  RemoteCtrl.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\Debug\RemoteCtrl.exe
