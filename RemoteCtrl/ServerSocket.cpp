@@ -159,7 +159,7 @@ bool CServerSocket::Send(CPacket& pack)
 	int ret = send(m_clntsock, pack.Data(), pack.size(), 0);
 	TRACE("[服务器]发送%d个字节\r\n", ret);
 	if (ret)return ret;
-	else return -1;
+	else return false;
 }
 
 bool CServerSocket::GetFilePath(std::string& strPath)

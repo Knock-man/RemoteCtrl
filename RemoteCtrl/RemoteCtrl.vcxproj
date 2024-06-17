@@ -145,6 +145,7 @@
     <ClInclude Include="CEdoyunQueue.h" />
     <ClInclude Include="CEdoyunTool.h" />
     <ClInclude Include="Command.h" />
+    <ClInclude Include="EdoyunServer.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="LockDialog.h" />
     <ClInclude Include="Packet.h" />
@@ -153,11 +154,13 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ServerSocket.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Thread.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CEdoyunQueue.cpp" />
     <ClCompile Include="CEdoyunTool.cpp" />
     <ClCompile Include="Command.cpp" />
+    <ClCompile Include="EdoyunServer.cpp" />
     <ClCompile Include="LockDialog.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="pch.cpp">

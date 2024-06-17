@@ -1,7 +1,9 @@
 #pragma once
+#include"pch.h"
 #include<atomic>
 #include<vector>
 #include<mutex>
+
 class ThreadFuncBase {};
 
 typedef int (ThreadFuncBase::* FUNCTYPPE)();

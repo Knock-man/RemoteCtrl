@@ -185,7 +185,7 @@ private:
         PPARAM* pParam = NULL;
         DWORD dwTransferred = 0;
         ULONG_PTR CompletionKey = 0;
-        OVERLAPPED* pOverlapped;
+        OVERLAPPED* pOverlapped = NULL;
       
         //循环接收队列消息 线程安全
         while (GetQueuedCompletionStatus(

@@ -10,6 +10,7 @@
 #include "ServerSocket.h"
 #include <conio.h>
 #include "CEdoyunQueue.h"
+#include "EdoyunServer.h"
 #include <MSWSock.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -57,6 +58,8 @@ public:
         memset(&m_overlapped, 0, sizeof(m_overlapped));
     }
 };
+
+/*
 void iocp()
 {
     //创建重叠结构套接字(一定非阻塞)
@@ -111,16 +114,14 @@ void iocp()
             
         }
     }
-
-
-    
-    
 }
+*/
 int main()
 {
     if (!CEdoyunTool::Init()) return 1;
-   
-
+    EdoyunServer server;
+    server.StartService();
+    getchar();
     /*
     if (!CEdoyunTool::IsAdmin())//管理员用户  TODO:这里条件取反 为了测试方便避免提权操作
     {
