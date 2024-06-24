@@ -4,9 +4,9 @@ iocp代码已经完成，但是没有融合进代码，但可以正常使用
 ## 开发环境:Visual Studio 2022  MFC
 
 ## 运行步骤
-  1、下载RemoteCtrl应用 
-  2、被控机打开Server文件，双击RemoteCtrl.exe文件  
-  3、控制端打开Client文件，双击RemoteClient.exe文件。输入被控机IP（端口默认9527）,点击连接测试
+  1、下载RemoteCtrl应用   
+  2、被控机打开Server文件，双击RemoteCtrl.exe文件    
+  3、控制端打开Client文件，双击RemoteClient.exe文件。输入被控机IP（端口默认9527）,点击连接测试  
 环境配置：
 ![image](https://github.com/Knock-man/RemoteCtrl/assets/66514322/25b57f61-096e-4c3a-9193-6b4bbfacb9a1)
 
