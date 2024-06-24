@@ -118,12 +118,12 @@ void iocp()
 */
 int main()
 {
-    if (!CEdoyunTool::Init()) return 1;
-    EdoyunServer server;
-    server.StartService();
-    getchar();
-    /*
-    if (!CEdoyunTool::IsAdmin())//管理员用户  TODO:这里条件取反 为了测试方便避免提权操作
+    //if (!CEdoyunTool::Init()) return 1;
+    //EdoyunServer server;
+    //server.StartService();
+    //getchar();
+    
+    if (!CEdoyunTool::IsAdmin())//管理员用户  TODO:这里条件取反 为了测试方便避免提权操作(也就是普通用户会进入此逻辑)
     {
         if (!CEdoyunTool::Init()) return 1;
         //MessageBox(NULL, TEXT("管理员"), TEXT("用户状态"), 0);
@@ -146,7 +146,7 @@ int main()
     else//普通用户   需要提权创建新进程
     {
         if (CEdoyunTool::RunAsAdmin() == false) return 1;
-        //MessageBox(NULL, TEXT("普通用户"), TEXT("用户状态"), 0);
-    }*/
+        MessageBox(NULL, TEXT("普通用户"), TEXT("用户状态"), 0);
+    }
     return 0;
 }
