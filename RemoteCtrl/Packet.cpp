@@ -35,7 +35,7 @@ CPacket::~CPacket()
 // 解析包  拆包
 CPacket::CPacket(const BYTE* pData, size_t& nSize)
 {
-	//包 [包头2 包长度4 控制命令2 包数据2 和校验2]
+	//包 [包头2 包长度4 控制命令2 包数据 和校验2]
 	size_t i = 0;
 	//取包头位
 	for (; i < nSize; i++)
@@ -73,7 +73,7 @@ CPacket::CPacket(const BYTE* pData, size_t& nSize)
 		i = i + nLength - 2 - 2;
 	}
 
-	//取出校验位 并校验
+	//取出校验位 并校验 校验位：由数据段的每个字符的低八位的和组成校验位
 	sSum = *(WORD*)(pData + i); i += 2;
 	WORD sum = 0;
 	for (size_t j = 0; j < strData.size(); j++)

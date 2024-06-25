@@ -10,16 +10,16 @@ class CPacket
 public:
 	CPacket();
 	~CPacket();
-	CPacket(const CPacket& pack);
-	CPacket& operator=(const CPacket& pack);
+	CPacket(const CPacket& pack);//拷贝构造函数
+	CPacket& operator=(const CPacket& pack);//赋值构造函数
 
-	CPacket(const BYTE* pData, size_t& nSize);//解包
-	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包
+	CPacket(const BYTE* pData, size_t& nSize);//解包 将pData指向的字符串拆分成包数据存放在包对象中
+	CPacket(WORD nCmd, const BYTE* pData, size_t nSize);//打包 将数据封装成包储存在包对象中
 	
 	
 
 	int size();//包大小
-	const char* Data();//包
+	const char* Data();//将包转换为字符串格式返回
 
 public:
 	//WORD:unsiged short(2字节)		DWORD:unsigned long(4字节)
