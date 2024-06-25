@@ -1,0 +1,40 @@
+﻿  pch.cpp
+  ClientController.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\CEdoyunTool.h(39,40): warning C4267: “参数”: 从“size_t”转换到“ULONG”，可能丢失数据
+  (编译源文件“/ClientController.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\ClientController.cpp(54,31): warning C4244: “return”: 从“INT_PTR”转换到“int”，可能丢失数据
+  (编译源文件“/ClientController.cpp”)
+  
+  ClientSocket.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\ClientSocket.cpp(141,53): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  (编译源文件“/ClientSocket.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\ClientSocket.cpp(218,49): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  (编译源文件“/ClientSocket.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\ClientSocket.cpp(361,50): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  (编译源文件“/ClientSocket.cpp”)
+  
+  CWatchDialog.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\CEdoyunTool.h(39,40): warning C4267: “参数”: 从“size_t”转换到“ULONG”，可能丢失数据
+  (编译源文件“/CWatchDialog.cpp”)
+  
+  Packet.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\Packet.cpp(69,18): warning C4267: “=”: 从“size_t”转换到“DWORD”，可能丢失数据
+  (编译源文件“/Packet.cpp”)
+  
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\Packet.cpp(130,24): warning C4244: “=”: 从“const DWORD”转换到“WORD”，可能丢失数据
+  (编译源文件“/Packet.cpp”)
+  
+  RemoteClient.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\CEdoyunTool.h(39,40): warning C4267: “参数”: 从“size_t”转换到“ULONG”，可能丢失数据
+  (编译源文件“/RemoteClient.cpp”)
+  
+  RemoteClientDlg.cpp
+C:\Users\xbj\Desktop\远控\RemoteCtrl\RemoteClient\CEdoyunTool.h(39,40): warning C4267: “参数”: 从“size_t”转换到“ULONG”，可能丢失数据
+  (编译源文件“/RemoteClientDlg.cpp”)
+  
+  StatusDlg.cpp
+  正在生成代码...
+  RemoteClient.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\x64\Debug\RemoteClient.exe
