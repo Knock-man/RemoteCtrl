@@ -1,3 +1,9 @@
+/*
+网络通信模块
+作用：网络初始化(socket() listen() bind() accept() send() recv() closesocket())
+run()函数利用了回调机制  解耦了业务层和网络层
+*/
+
 #pragma once
 #include"framework.h"
 #include"pch.h"
@@ -8,41 +14,39 @@
 #define BUFSIZE 409600
 #define PORT 9527
 
+typedef void(*SOCKET_CALLBACK)(void* arg, int status, CPacket& inPacket, std::list<CPacket>&);//回调函数
 
-
-
-typedef void(*SOCKET_CALLBACK)(void* arg, int status,std::list<CPacket>&, CPacket& inPacket);//回调函数
-
+//网络通信类
 class CServerSocket
 {
 public:
 	//获取单例实例接口
 	static CServerSocket* getInstance();
 
-
-	int Run(SOCKET_CALLBACK callback, void* arg);
+	//执行网络通信 初始化网络 → 建立连接 → 接收数据 → 发送数据 → 关闭套接字
+	int Run(void* arg,SOCKET_CALLBACK callback);
 
 private:
 
-	//套接字初始化
+	//套接字初始化 创建套接字 bind listen
 	bool InitSocket();
-
 	
-	//建立连接
+	//建立连接 accept() 阻塞等待
 	bool AcceptClient();
 
-	//接收消息
+	//接收消息 存入缓冲区 
 	int DealCommand();
 
-	//发送消息
+	//发送数据 直接发送字符串
 	bool Send(const void* pData, size_t nSize);
+	//发送包 先把包转化为字符串再发送
 	bool Send(CPacket& pack);
 
 	//获取文件列表
-	bool GetFilePath(std::string& strPath);
+	/*bool GetFilePath(std::string& strPath);*/
 
 	//获取鼠标事件
-	bool GetMouseEvent(MOUSEEV& mouse);
+	/*bool GetMouseEvent(MOUSEEV& mouse);*/
 
 	//获取数据包
 	CPacket& GetPacket();

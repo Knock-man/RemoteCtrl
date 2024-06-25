@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Command.h"
 
+//主要将<cmd,处理函数>存入map中
 CCommand::CCommand() :threadid(0)
 {
 	struct {
@@ -24,19 +25,17 @@ CCommand::CCommand() :threadid(0)
 	for (int i = 0; data[i].nCmd != -1; i++)
 	{
 		m_mapFunction.insert(std::pair<int, CMDFUNC>(data[i].nCmd, data[i].func));
-
 	}
 
 }
 
-
-///执行函数 网络层回调    调用成员函数ExcuteCommand（）
-void CCommand::RunCommand(void* cmdObject, int nCmd, std::list<CPacket>& listPacket, CPacket& inPacket)//listPacket钩子
+//执行函数 网络层回调    调用成员函数ExcuteCommand（）
+void CCommand::RunCommand(void* cmdObject, int nCmd, CPacket& inPacket, std::list<CPacket>& listPacket)//listPacket钩子
 {
     CCommand* thiz = (CCommand*)cmdObject;
     if (nCmd > 0)
     {
-        int ret = thiz->ExcuteCommand(nCmd, listPacket, inPacket);//执行函数
+        int ret = thiz->ExcuteCommand(nCmd, inPacket,listPacket);//执行函数
         if (ret != 0)
         {
             TRACE("执行命令失败：%d ret = %d\r\n", nCmd, ret);
@@ -50,7 +49,7 @@ void CCommand::RunCommand(void* cmdObject, int nCmd, std::list<CPacket>& listPac
 }
 
 //执行成员函数，调用命令对应的函数
-int CCommand::ExcuteCommand(int nCmd, std::list<CPacket>& listPacket, CPacket& inPacket)
+int CCommand::ExcuteCommand(int nCmd, CPacket& inPacket,std::list<CPacket>& listPacket)
 {
 	std::map<int, CMDFUNC>::iterator it = m_mapFunction.find(nCmd);
 	if (it != m_mapFunction.end())
@@ -59,9 +58,6 @@ int CCommand::ExcuteCommand(int nCmd, std::list<CPacket>& listPacket, CPacket& i
 	}
 	return 0;
 };
-
-
-
 
 //查询磁盘分区
 int CCommand::MakeDriverInfo(std::list<CPacket>& listPacket, CPacket& inPacket)
@@ -125,7 +121,7 @@ int CCommand::MakeDirectoryInfo(std::list<CPacket>& listPacket, CPacket& inPacke
         OutputDebugString(TEXT("没有找到任何文件"));
         return -3;
     }
-    int Count = 0;//文件数目
+    //int Count = 0;//文件数目
 
     //挨个发送有效文件给客户端
     do
@@ -134,7 +130,7 @@ int CCommand::MakeDirectoryInfo(std::list<CPacket>& listPacket, CPacket& inPacke
         finfo.IsDirectory = ((c_file.attrib & _A_SUBDIR) != 0);
         memcpy(finfo.szFileName, c_file.name, strlen(c_file.name));
         listPacket.push_back(CPacket(2, (BYTE*)&finfo, sizeof(finfo)));      
-        Count++;  
+       // Count++;  
         //TRACE("[服务器]发送文件名[%s]\r\n", finfo.szFileName);     
     } while (!_findnext(hFile, &c_file));//查找工作目录匹配的下一个文件
 
@@ -142,7 +138,7 @@ int CCommand::MakeDirectoryInfo(std::list<CPacket>& listPacket, CPacket& inPacke
     FILEINFO finfo;
     finfo.HasNext = false;//设置是最后一个文件
     listPacket.push_back(CPacket(2, (BYTE*)&finfo, sizeof(finfo)));
-    TRACE("Count=%d\r\n", Count);
+    //TRACE("Count=%d\r\n", Count);
     return 0;
 }
 
@@ -348,8 +344,6 @@ int CCommand::SendScreen(std::list<CPacket>& listPacket, CPacket& inPacket)
     return 0;
 }
 
-
-
 //锁机
 int CCommand::LockMachine(std::list<CPacket>& listPacket, CPacket& inPacket)
 {
@@ -381,8 +375,8 @@ void CCommand::threadLockDlgMain()
     CRect rect;//声明矩形区域
     rect.left = 0;
     rect.top = 0;
-    rect.right = GetSystemMetrics(SM_CXFULLSCREEN);//获得屏幕像素大小
-    rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN) + 70;
+    rect.right = GetSystemMetrics(SM_CXFULLSCREEN);//获得屏幕的宽度
+    rect.bottom = GetSystemMetrics(SM_CYFULLSCREEN) + 70;//获得屏幕的高度
     dlg.MoveWindow(rect);//移动调整对话框的大小(和窗口一样大)
 
     //设置文字位置大小
@@ -397,6 +391,7 @@ void CCommand::threadLockDlgMain()
         int y = (rect.bottom - nHeight) / 2;
         pText->MoveWindow(x, y, rtText.Width(), rtText.Height());//文字控件移动到对话框中间
     }
+
     //窗口置于顶层
     dlg.SetWindowPos(&dlg.wndTopMost, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
     //隐藏鼠标

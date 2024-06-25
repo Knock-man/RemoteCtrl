@@ -1,14 +1,20 @@
 #pragma once
+/*
+##工具类##
+作用：通用的一些操作，可以直接挪用
+内容：十六进制输出字符串 判断是否为管理员用户 升级为管理员用户 打印错误 设为开机自启动
+*/
 class CEdoyunTool
 {
 public:
+    //按照十六进制输出字符串
     static void Dump(BYTE* pData, size_t nSize)
     {
         std::string strOut;
         for (size_t i = 0; i < nSize; i++)
         {
             char buf[8] = "";
-            if (i > 0 && (i % 16 == 0))strOut += "\n";
+            if (i > 0 && (i % 16 == 0))strOut += "\n";//十六个字符换一行
             snprintf(buf, sizeof(buf), "%02X ", pData[i] & 0xFF);
             strOut += buf;
         }
@@ -25,12 +31,29 @@ public:
             NULL, GetLastError(),
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
             (LPSTR)&lpMessageBuf, 0, NULL);
+
         OutputDebugString(lpMessageBuf);
         MessageBox(NULL, lpMessageBuf, TEXT("程序错误"), MB_OK | MB_ICONERROR);
         LocalFree((HLOCAL)lpMessageBuf);
     }
 
-    //判断当进程是否提权
+    //打印错误(根据错误代码)
+    static std::string GetErrInfo(int wsaErrCode)
+    {
+        std::string ret;
+        LPVOID lpMsgBuf = NULL;
+        FormatMessage(
+            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
+            NULL,
+            wsaErrCode,
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPTSTR)&lpMsgBuf, 0, NULL);
+        ret = (char*)lpMsgBuf;
+        LocalFree(lpMsgBuf);
+        return ret;
+    }
+
+    //判断当进程是是管理员运行
     static bool IsAdmin() {
         //拿到当前进程的令牌 Token
         HANDLE hToken = NULL;//令牌
@@ -57,22 +80,22 @@ public:
         }
         printf("length of tokeninformation is %d\r\n", len);
         return false;
-
     }
 
- //提权
+ //提权(切换为管理员用户)
 /*
-需设置
-本地安全策略→本地策略→安全选项
-账户：管理员账户状态  启用
-账户：使用空密码的本地账户只允许进行控制台登录 禁用
+PC需设置以下信息：
+    本地安全策略→本地策略→安全选项
+        账户：管理员账户状态  启用
+        账户：使用空密码的本地账户只允许进行控制台登录 禁用
 */
+    //切换为管理员用户
     static bool RunAsAdmin() {
         // 获取当前程序路径  
         WCHAR sPath[MAX_PATH] = { 0 };
         GetModuleFileNameW(NULL, sPath, MAX_PATH); // 获取当前可执行文件路径  
 
-        // 设置启动信息  
+        // 以管理员身份运行一个进程
         STARTUPINFOW si = { 0 };
         si.cb = sizeof(STARTUPINFOW);
         PROCESS_INFORMATION pi = { 0 };
@@ -80,19 +103,20 @@ public:
         BOOL ret = CreateProcessWithLogonW((LPCWSTR)"Administrator", NULL, NULL, LOGON_WITH_PROFILE, NULL, sPath, CREATE_UNICODE_ENVIRONMENT, NULL, NULL, &si, &pi);
         //MessageBox(NULL, (LPCSTR)sPath, TEXT("用户状态"), 0);
         if (!ret) {
-            MessageBox(NULL, TEXT("创建进程失败"), TEXT("程序错误"), MB_OK | MB_ICONERROR);
+            //MessageBox(NULL, TEXT("创建进程失败"), TEXT("程序错误"), MB_OK | MB_ICONERROR);
             ShowError();
             return false;
         }
 
-        MessageBox(NULL, TEXT("进程创建成功"), TEXT("用户状态"), 0);
+        //MessageBox(NULL, TEXT("进程创建成功"), TEXT("用户状态"), 0);
 
-        // 等待程序结束  
+        // 等待创建进程运行结束  
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         return true;
     }
+
 
  //设置开启自启
 /*
@@ -105,15 +129,22 @@ public:
 */
 
 
-//设置开机自启：修改注册表方式(登录过程中启动) 
+//设置开机自启方法一：修改注册表(登录过程中启动) 
 //开机自启注册表位置：计算机\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    /*
+    步骤：
+        1.将可执行文件复制到系统变量路径下 system32/syswow64
+        2.打开注册表开机自启位置 
+        3.将系统变量文件夹下的可执行文件路径添加到注册表开启自启路径下
+    
+    */
     static int WriteRefisterTable(const CString SystemPath) {
         if (PathFileExists(SystemPath))return 0;//文件已经存在
 
-        //可执行文件复制到系统变量文件中
+        //可执行文件复制到系统变量文件夹中  system32/syswow64
         char exePath[MAX_PATH] = "";//当前可执行文件路径
-        GetModuleFileName(NULL,exePath, MAX_PATH);
-        bool ret = CopyFile(exePath, SystemPath, FALSE);
+        GetModuleFileName(NULL,exePath, MAX_PATH);//获得当前可执行文件路径
+        bool ret = CopyFile(exePath, SystemPath, FALSE);//可执行文件复制到系统变量文件夹中
         if (ret == FALSE)
         {
             MessageBox(NULL, TEXT("复制文件夹失败，是否权限不足?\r\n"), TEXT("错误"), MB_ICONERROR | MB_TOPMOST);
@@ -131,7 +162,7 @@ public:
             return -2;
         }
 
-        //将可执行文件软连接添加到注册表开启自启路径下
+        //将系统变量文件夹下的可执行文件路径添加到注册表开启自启路径下
         ret = RegSetValueEx(hKey, TEXT("RemoteCtrl"), 0, REG_EXPAND_SZ, (BYTE*)(LPCTSTR)SystemPath, SystemPath.GetLength() * sizeof(TCHAR));
         if (ret != ERROR_SUCCESS)
         {
@@ -143,13 +174,16 @@ public:
         return 0;
     }
 
-    //设置开机自启：写入自启动文件夹方式（用户登录之后启动）
+    //设置开机自启方式2：写入自启动文件夹（用户登录之后启动）
     //自启文件夹打开方式：win+R 输入:shell:startup
+    /*
+        方法：直接将可执行文件复制到自启动文件夹内即可
+    */
     static int WriteStartupDir(const CString& startupPath)
     {
         if (PathFileExists(startupPath))return 0;//文件已经存在
         TCHAR exePath[MAX_PATH] = TEXT("");
-        GetModuleFileName(NULL, exePath, MAX_PATH);//获取可执行文件路径
+        GetModuleFileName(NULL, exePath, MAX_PATH);//获取当前可执行文件路径
 
         BOOL ret = CopyFile(exePath, startupPath, FALSE);//可执行文件放到开机自启文件夹中
         if (ret == FALSE)
@@ -160,9 +194,10 @@ public:
         return 0;
     }
 
+    //用于MFC命令行项目初始化
     static bool Init()
     {
-        //通用：用于MFL命令行项目初始化
+        //通用：用于MFC命令行项目初始化
         HMODULE hModule = ::GetModuleHandle(nullptr);
         if (hModule == nullptr)
         {
@@ -178,21 +213,5 @@ public:
             return false;
         }
         return true;
-    }
-
-    //打印错误
-    static std::string GetErrInfo(int wsaErrCode)
-    {
-        std::string ret;
-        LPVOID lpMsgBuf = NULL;
-        FormatMessage(
-            FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            NULL,
-            wsaErrCode,
-            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-            (LPTSTR)&lpMsgBuf, 0, NULL);
-        ret = (char*)lpMsgBuf;
-        LocalFree(lpMsgBuf);
-        return ret;
     }
 };

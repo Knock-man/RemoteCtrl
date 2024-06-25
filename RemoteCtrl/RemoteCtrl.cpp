@@ -47,75 +47,6 @@ bool ChooseAutoInvoke() {
 }
 
 
-class COverlapped {
-public:
-    OVERLAPPED m_overlapped;
-    DWORD m_operator;
-    char m_buffer[4096];
-    COverlapped() {
-        m_operator = 0;
-        memset(m_buffer, 0, sizeof(m_overlapped));
-        memset(&m_overlapped, 0, sizeof(m_overlapped));
-    }
-};
-
-/*
-void iocp()
-{
-    //创建重叠结构套接字(一定非阻塞)
-    SOCKET sock = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-    SOCKET client = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-    if (sock == INVALID_SOCKET)
-    {
-        CEdoyunTool::ShowError();
-        return;
-    }
-    sockaddr_in addr;
-    addr.sin_family = PF_INET;
-    addr.sin_addr.s_addr = inet_addr("0.0.0.0");
-    addr.sin_port = htons(9527);
-    bind(sock, (sockaddr*)&addr, sizeof(addr));
-    listen(sock, 5);
-
-    
-    //绑定iocp和sock
-    HANDLE hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, sock, 4);
-    CreateIoCompletionPort((HANDLE)sock, hIOCP, 0, 0);
-    
-    //创建重叠结构
-    COverlapped overlapped;
-    overlapped.m_operator = 1;
-    DWORD received = 0;
-    if (!AcceptEx(sock, client, overlapped.m_buffer, 0, sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &received, &overlapped.m_overlapped))
-    {
-        CEdoyunTool::ShowError();
-    }
-
-    overlapped.m_operator = 2;
-    WSASend();
-    overlapped.m_operator = 3;
-    WSARecv();
-
-    while (true)//代表一个线程
-    {
-        //监听事件发生
-        LPOVERLAPPED pOverlapped = NULL;
-        DWORD trasferred = 0;
-        DWORD CompletionKey = 0;
-        if (GetQueuedCompletionStatus(hIOCP, &trasferred, &CompletionKey, &pOverlapped, INFINITY))
-        {
-            //发生事件对象
-            COverlapped* pO = CONTAINING_RECORD(pOverlapped, COverlapped, m_overlapped);
-            switch (pO->m_operator)
-            {
-            case 1:
-                //处理accept的操作
-            }
-            
-        }
-    }
-}
-*/
 int main()
 {
     //if (!CEdoyunTool::Init()) return 1;
@@ -125,13 +56,13 @@ int main()
     
     if (!CEdoyunTool::IsAdmin())//管理员用户  TODO:这里条件取反 为了测试方便避免提权操作(也就是普通用户会进入此逻辑)
     {
-        if (!CEdoyunTool::Init()) return 1;
+        if (!CEdoyunTool::Init()) return 1;//MFC命令行项目初始化
         //MessageBox(NULL, TEXT("管理员"), TEXT("用户状态"), 0);
         if (ChooseAutoInvoke())//设置开机自启
         {
             CCommand cmdObject;//业务处理对象
             //运行服务器
-            int ret = CServerSocket::getInstance()->Run(&CCommand::RunCommand, &cmdObject);//执行命令，传入业务层回调函数
+            int ret = CServerSocket::getInstance()->Run(&cmdObject ,&CCommand::RunCommand);//执行命令，传入业务层回调函数
             switch (ret)
             {
             case -1:
