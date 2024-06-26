@@ -298,19 +298,49 @@ int CCommand::MouseEvent(std::list<CPacket>& listPacket, CPacket& inPacket)
 //发送截图
 int CCommand::SendScreen(std::list<CPacket>& listPacket, CPacket& inPacket)
 {
-    //屏幕截图
-    HDC hScreen = ::GetDC(NULL);//获取屏幕上下文句柄（屏幕截图）
-    int nBitPerPixel = GetDeviceCaps(hScreen, BITSPIXEL);//像素的颜色位数  RGB红绿蓝三通道 每个通道8位表示
-    int nWidth = GetDeviceCaps(hScreen, HORZRES);//宽
-    int nHeight = GetDeviceCaps(hScreen, VERTRES);//高
+   
+    HDC hScreen = ::GetDC(NULL);//获取屏幕上下文
+    /*
+        HDC：是一个句柄（Handle），代表一个设备上下文。设备上下文是一个Windows数据结构，它包含了绘制图形所需的信息，
+        如设备类型、绘图颜色、线条和填充样式等。
+        
+        ::GetDC：用于获取指定窗口（或整个屏幕）的设备上下文
+    */
 
-    //创建一个图像对象
+    //获取屏幕上下文的颜色位数 宽和高
+    int nBitPerPixel = GetDeviceCaps(hScreen, BITSPIXEL);//每个像素的颜色位数(颜色深度)
+    /*
+    nBitPerPixel=32;
+    意味着每个像素使用32位来表示颜色
+    通常包括24位用于红、绿、蓝（RGB）颜色通道（每个通道8位）
+    以及额外的8位可能用于alpha通道（透明度）或其他目的（尽管在屏幕上显示时，这额外的8位通常不被使用，因为屏幕不支持透明度）。
+    */
+    //TRACE("像素的位数:%d", nBitPerPixel);
+    int nWidth = GetDeviceCaps(hScreen, HORZRES);//屏幕宽
+    int nHeight = GetDeviceCaps(hScreen, VERTRES);//屏幕高
+
+    //创建一个图像对象(依据屏幕上下文宽高颜色位数)  将屏幕的位图复制到图像对象中的位图中
     CImage screen;
     screen.Create(nWidth, nHeight, nBitPerPixel);
     BitBlt(screen.GetDC(), 0, 0, nWidth, nHeight, hScreen, 0, 0, SRCCOPY);//将hScreen图像复制到screen图像中
-
-    //删除(上下文)屏幕截图
-    ReleaseDC(NULL, hScreen);
+    /*
+          
+          从一个设备上下文（DC）的指定区域复制位图到一个目标设备上下文的指定区域
+          BOOL BitBlt(  
+          HDC     hdcDest,          // 目标设备上下文句柄  
+          int     nXDest,           // 目标矩形左上角的X坐标  
+          int     nYDest,           // 目标矩形左上角的Y坐标  
+          int     nWidth,           // 矩形区域的宽度  
+          int     nHeight,          // 矩形区域的高度  
+          HDC     hdcSource,        // 源设备上下文句柄  
+          int     nXSrc,            // 源矩形左上角的X坐标  
+          int     nYSrc,            // 源矩形左上角的Y坐标  
+          DWORD   rop               // 光栅操作码  
+            );
+    
+    */
+    
+    ReleaseDC(NULL, hScreen);//释放屏幕上下文
 
     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, 0);//分配一个可移动的内存块
     if (hMem == NULL)return -1;
@@ -318,10 +348,11 @@ int CCommand::SendScreen(std::list<CPacket>& listPacket, CPacket& inPacket)
     HRESULT ret = CreateStreamOnHGlobal(hMem, TRUE, &pStream);//基于内存块创建一个内存流，pStream指向流对象
     if (ret == S_OK)
     {
-        screen.Save(pStream, Gdiplus::ImageFormatPNG);//将图片保存到内存流中
-        LARGE_INTEGER bg = { 0 };
+        screen.Save(pStream, Gdiplus::ImageFormatPNG);//将图片保存到内存流中(流指针会移动)
+        LARGE_INTEGER bg = { 0 };//偏移量
         pStream->Seek(bg, STREAM_SEEK_SET, NULL);//将流指针移到流的起始位置
         PBYTE pData = (PBYTE)GlobalLock(hMem);//锁定内存块，转化为字节型指针，获取内存块的起始地址
+        //Globallock函数用于锁定内存中指定的内存块，并返回一个地址值，该地址值指向内存块的起始处。
         SIZE_T nSize = GlobalSize(hMem);//获取分配内存块大小
         listPacket.push_back(CPacket(6, pData, nSize));
         GlobalUnlock(hMem);//内存块解锁

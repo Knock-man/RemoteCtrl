@@ -1,4 +1,33 @@
-﻿
+﻿/*
+主界面
+负责UI界面的相关操作，具体业务交给控制层处理
+(1)不需要发送数据的 直接调用控制层具体处理函数，比如
+		CClientController::getInstance()->StartWatchScreen();
+(2)需要发送数据的，调用业务层SendCommandPacket()函数
+	CClientController::getInstance()->bool SendCommandPacket(HWND hWnd，int nCmd, bool bAutoClose=true，BYTE* pData=NULL, size_t nLength=0,WPARAM wParam = 0)
+												            (窗口句柄，操作类型，长短连接，数据，数据大小,附加参数)
+
+		
+
+如何自定义消息处理函数？
+	1.定义一个唯一的消息ID
+		#define WM_SEND_PACK_ACK (WM_USER+2)
+	2.在头文件中声明消息映射表
+		DECLARE_MESSAGE_MAP()  
+	3.在头文件中声明消息处理函数
+		afx_msg LRESULT OnSendPacketAck(WPARAM wParam, LPARAM lParam);
+	4.在源文件中定义消息映射表
+		BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
+			......
+			ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketAck)
+		END_MESSAGE_MAP()
+	5.在源文件中实现消息处理函数
+		LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+		{
+
+		}
+*/
+
 // RemoteClientDlg.h: 头文件
 //
 
@@ -29,13 +58,11 @@ private:
 	void DealCommand(WORD nCmd,const std::string& strData, LPARAM lParam);
 	//初始化主对话框UI界面
 	void InitUIData();
-	//获取树节点 hTree  完整的绝对路径 D:\C\xbj\shixi
+	//通过树节点 hTree  完整的绝对路径 D:\C\xbj\shixi
 	CString Getpath(HTREEITEM hTree);
 	//删除hTree节点的所有孩子节点
 	void DeleteTreeChildrenItem(HTREEITEM hTree);
-	//将二进制转换为16进制输出
-	void Dump(BYTE* pData, size_t nSize);
-	//请求鼠标当前鼠标指向的树节点下面的所有文件和目录
+	//请求当前鼠标指向的树节点下面的所有文件和目录
 	void LoadFileInfo();
 	//加载当前被选中句柄的全部文件(使用在删除文件之后重新加载所有文件到显示列表中)
 	void LoadFileCurrent();
@@ -65,8 +92,8 @@ public:
 	CTreeCtrl m_Tree;
 
 public:
-	afx_msg void OnBnClickedBtnTest();//点击测试连接按钮 发送测试连接请求  cmd=1
-	afx_msg void OnBnClickedBtnFileinfo();//点击查看文件信息按钮 发送查看所有磁盘分区请求  cmd=1981
+	afx_msg void OnBnClickedBtnTest();//点击测试连接按钮 发送测试连接请求  cmd=1981
+	afx_msg void OnBnClickedBtnFileinfo();//点击查看文件信息按钮 发送查看所有磁盘分区请求  cmd=1
 	afx_msg void OnNMDblclkTreeDir(NMHDR* pNMHDR, LRESULT* pResult);//双击树控件  发送查看选中节点下所有文件目录请求 cmd=2
 	afx_msg void OnNMClickTreeDir(NMHDR* pNMHDR, LRESULT* pResult);//单击树控件	   发送查看选中节点下所有文件目录请求 cmd=2
 	afx_msg void OnNMRClickListFile(NMHDR* pNMHDR, LRESULT* pResult);//右键单击列表  弹出子菜单(下载文件 删除文件 运行文件)

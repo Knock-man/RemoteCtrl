@@ -1,3 +1,11 @@
+/*
+控制层
+负责发送接收数据 实现业务具体逻辑
+
+监控实现：
+	开启线程 隔一段频率向服务器发送截图请求(图片缓存为空时)
+*/
+
 #pragma once
 #include "ClientSocket.h"
 #include "CWatchDialog.h"
@@ -43,7 +51,8 @@ public:
 		CClientSocket::getInstance()->CloseSocket();
 	}
 
-	//发送数据  返回值是状态
+	//发送数据接口 供视图层使用 调用网络层发送数据接口  
+	//返回值是发送状态
 	bool SendCommandPacket(HWND hWnd,//数据包收到后需要应答的窗口
 		int nCmd, //控制命令
 		bool bAutoClose=true,//长短连接 

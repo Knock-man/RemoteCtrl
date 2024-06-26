@@ -1,12 +1,12 @@
 /*
 业务模块
-作用：接收网络层利用回调传来的数据包 调用相应处理函数进行处理
+作用：接收网络层利用回调传来的数据包,根据操作命令，调用相应处理函数进行处理
 
 锁机实现原理：
     1.开启一个线程，线程内创建一个遮蔽框  _beginthreadex()
     2.设置遮蔽框大小为屏幕大小，置顶，位置为屏幕位置   设置CRect大小   dlg.MoveWindow(rect)
     3.限制鼠标活动范围为左上角一个像素，隐藏任务栏，隐藏鼠标
-    4.开启while()事件循环 阻塞当前线程  当收到esc消息时才结束循环  MSG msg ; GetMessage() TranslateMessage() DispatchMessage()
+    4.开启while()事件循环 阻塞当前线程  当收到Esc消息时才结束循环  MSG msg ; GetMessage() TranslateMessage() DispatchMessage()
     5.恢复鼠标、任务栏，销毁遮蔽框
 
 查看磁盘分区原理：
@@ -36,7 +36,32 @@
     2.不同动作按键采取不同行为  API mouse_event() 响应鼠标事件
 
 截图实现原理:
-    
+    1.截图
+        (1)获取屏幕上下文DC  HDC hScreen = ::GetDC(NULL);
+        (2)依据屏幕上下文DC 创建一个图像对象
+                 CImage screen;     
+                 screen.Create(nWidth, nHeight, nBitPerPixel);
+        (3)将屏幕位图复制到图像对象位图上完成截图  BitBlt()
+        (4)释放屏幕上下文
+
+    2.将图像类型CImage保存到string中
+        (1)分配一个可移动的内存块  HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, 0);
+        (2)创建一个内存流 管理内存块
+            IStream* pStream = NULL;//内存流指针
+            HRESULT ret = CreateStreamOnHGlobal(hMem, TRUE, &pStream);//基于内存块创建一个内存流
+        (3)使用内存流指针将图像保存到内存块中
+            screen.Save(pStream, Gdiplus::ImageFormatPNG);
+        (4)将内存流指针移到起始位置
+            pStream->Seek(bg, STREAM_SEEK_SET, NULL)
+        (5)锁定内存块 获得内存块的地址
+            PBYTE pData = (PBYTE)GlobalLock(hMem)//获得内存块地址
+            SIZE_T nSize = GlobalSize(hMem);//获取分配内存块大小
+        (6)发送内存数据
+            listPacket.push_back(CPacket(6, pData, nSize));
+        (7)内存块解锁 GlobalUnlock(hMem);
+           释放内存块 GlobalFree(hMem);  
+           释放内存流 pStream->Release();
+           释放图像上下文 screen.ReleaseDC();
 */
 #pragma once
 #include<map>

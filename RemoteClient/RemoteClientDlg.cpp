@@ -52,25 +52,6 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 
 // CRemoteClientDlg 对话框
 
-
-void CRemoteClientDlg::Dump(BYTE* pData, size_t nSize)
-{
-	std::string strOut;
-	for (size_t i = 0; i < nSize; i++)
-	{
-		char buf[8] = "";
-		if (i > 0 && (i % 16 == 0))strOut += "\n";
-		snprintf(buf, sizeof(buf), "%02X ", pData[i] & 0xFF);
-		strOut += buf;
-	}
-	strOut += "\n";
-	OutputDebugStringA(strOut.c_str());
-}
-
-
-
-
-
 CRemoteClientDlg::CRemoteClientDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_REMOTECLIENT_DIALOG, pParent)
 	, IP_Address(0)
@@ -133,9 +114,6 @@ BOOL CRemoteClientDlg::OnInitDialog()
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
 		}
 	}
-
-	
-
 	// TODO: 在此添加额外的初始化代码
 	InitUIData();//初始化主对话框UI界面（自己写的）
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -216,15 +194,12 @@ void CRemoteClientDlg::LoadFileCurrent()
 	HTREEITEM hTree = m_Tree.GetSelectedItem();//获取树控件中被选中的项
 	CString strPath = Getpath(hTree);//获得完整文件路径	 D:\\xbj\shixi
 	//TRACE("path=%s\r\n", strPath);
-
 	//清空列表
 	m_List.DeleteAllItems();
 
-	
 	//发送查看目录下所有文件请求
 	int nCmd =CClientController::getInstance()->SendCommandPacket(GetSafeHwnd(),2, false, (BYTE*)(LPCTSTR)strPath, strPath.GetLength());
 	
-
 	//接收文件信息 PFILEINFO为文件结构体
 	PFILEINFO pInfo = (PFILEINFO)CClientController::getInstance()->GetPacket().strData.c_str();
 	while (pInfo->HasNext) {//是否为最后一个文件
