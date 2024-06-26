@@ -1,3 +1,10 @@
+/*
+网络层
+消息机制：
+1.开启一个线程执行消息循环
+2.当有数据发送时，向消息队列投送发送数据消息请求(SendPacketMessage)，消息循环接收事件，调用发送数据的回调函数(SendPack）
+3.在发送数据回调函数中执行 连接服务器 向服务器发送数据 接收服务器数据 向指定窗口发送ACK消息
+*/
 #pragma once
 #include "framework.h"
 #include "pch.h"
@@ -28,8 +35,8 @@ public:
 	//接收消息
 	int DealCommand();
 
-	//bool SendPacket(const CPacket& pack, std::list<CPacket>& lstPacks,bool isAutoClosed=true);
-	bool SendPacket(HWND hWnd, const CPacket& pack, bool isAutoClosed=true, WPARAM wParam = 0);
+	//发送数据消息请求
+	bool SendPacketMessage(HWND hWnd, const CPacket& pack, bool isAutoClosed=true, WPARAM wParam = 0);
 
 	//获取数据包
 	CPacket& GetPacket();
@@ -49,9 +56,6 @@ private:
 
 	//容器
 	std::map<UINT, MSGFUNC> m_mapFunc;
-	std::map<HANDLE, bool>m_mapAutoClosed;//事件长短连接映射表
-	std::map<HANDLE, std::list<CPacket>&> m_mapAck;//接收结果映射表
-	std::list<CPacket>m_lstSend;//发送队列
 
 	HANDLE m_eventInvoke;//启动事件
 	UINT m_nThreadID;
@@ -74,26 +78,29 @@ private:
 	std::vector<char> m_buffer;
 
 	//构造
+	/*
+		创建线程 注册<消息,消息处理函数映射表>
+	*/
 	CClientSocket();
 
 	//析构
 	~CClientSocket();
 
 	CClientSocket(const CClientSocket&);
-	CClientSocket& operator=(const CClientSocket&) {};
+	CClientSocket& operator=(const CClientSocket&) = default;
 
 	//初始化网络环境
 	BOOL InitSockEnv();
 
 	//发送消息
-	//bool Send(const void* pData, size_t nSize);
 	bool Send(const CPacket& pack);
 
-	//void threadFunc();
+	//消息循环 等待有通信事件发生 调取相应的消息处理函数
 	static unsigned _stdcall threadEntry(void* arg);
-	void threadFunc2();//消息循环
+	void threadFunc();
 
-	//消息函数  WM_SEND_PACK消息激活
+	//消息处理函数
+	//建立网络连接，向服务器发送数据，并且在收到服务器数据后，向指定窗口发送消息
 	void SendPack(UINT nMsg, WPARAM wParam/*缓冲区的值*/, LPARAM lParam/*缓冲区的长度*/);
 	
 	

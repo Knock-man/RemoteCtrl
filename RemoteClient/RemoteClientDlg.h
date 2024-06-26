@@ -15,19 +15,26 @@
 	2.在头文件中声明消息映射表
 		DECLARE_MESSAGE_MAP()  
 	3.在头文件中声明消息处理函数
-		afx_msg LRESULT OnSendPacketAck(WPARAM wParam, LPARAM lParam);
+		afx_msg LRESULT OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam);
 	4.在源文件中定义消息映射表
 		BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 			......
-			ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketAck)
+			ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketMessageAck)
 		END_MESSAGE_MAP()
 	5.在源文件中实现消息处理函数
-		LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+		LRESULT CRemoteClientDlg::OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam)
 		{
 
 		}
 */
 
+
+/*客户端设计思路
+*	视图层负责视图相关操作 需要执行业务时向业务层提出请求 并通过消息循环接收网络层传来的数据
+*	业务层负责处理具体业务 需要发送数据时向网络层循环队列投送请求
+*	网络层开启消息循环队列 有请求到达时调用消息处理函数向服务器发送数据
+*   网络层接收到数据 向对应的窗口发送消息ACK
+*/
 // RemoteClientDlg.h: 头文件
 //
 
@@ -104,5 +111,5 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnIpnFieldchangedIpaddressServ(NMHDR* pNMHDR, LRESULT* pResult);//IP输入框改变 更新IP PORT
 	afx_msg void OnEnChangeEditPort();//PORT输入框改变 更新IP PORT
-	afx_msg LRESULT OnSendPacketAck(WPARAM wParam, LPARAM lParam);//接收结果消息 wParam:数据包  lParam:附带参数（(树节点句柄/文件指针)）
+	afx_msg LRESULT OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam);//接收结果消息 wParam:数据包  lParam:附带参数（(树节点句柄/文件指针)）
 };

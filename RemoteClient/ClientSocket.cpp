@@ -157,7 +157,8 @@ int CClientSocket::DealCommand()
 	return -1;
 }
 
-bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed, WPARAM AttParam)
+//发送消息 负责PostThreadMessage()发送消息  将数据+数据大小+长短连接+附加参数 打包成WPARAM传递给消息
+bool CClientSocket::SendPacketMessage(HWND hWnd,const CPacket& pack, bool isAutoClosed, WPARAM AttParam)
 {
 	//向通信线程发送消息
 	UINT nMode = isAutoClosed ? CSM_AUTOCLOSE : 0;
@@ -171,43 +172,6 @@ bool CClientSocket::SendPacket(HWND hWnd,const CPacket& pack, bool isAutoClosed,
 	}
 	return ret;
 }
-
-/*
-bool CClientSocket::SendPacket(const CPacket& pack,std::list<CPacket>& lstPacks,bool isAutoClosed)//lstPacks储存结果
-{
-	//开启通信线程
-	if (m_sock == INVALID_SOCKET && m_hThread == INVALID_HANDLE_VALUE)
-	{
-		m_hThread = (HANDLE)_beginthread(&CClientSocket::threadEntry, 0, this);
-	}
-	m_lock.lock();
-	auto pr = m_mapAck.insert(std::pair<HANDLE, std::list<CPacket>&>(pack.hEvent, lstPacks));//接收Map
-	m_mapAutoClosed.insert(std::pair<HANDLE, bool>(pack.hEvent,isAutoClosed));//长短连接标记
-	m_lstSend.push_back(pack);//加入到发送队列
-	m_lock.unlock();
-
-	WaitForSingleObject(pack.hEvent, INFINITE);//无限阻塞，直至被唤醒(数据接收完成，m_hThread线程会唤醒)
-
-	std::map<HANDLE, std::list<CPacket>&>::iterator it;
-	it = m_mapAck.find(pack.hEvent);
-	if (it != m_mapAck.end())
-	{
-		m_lock.lock();
-		m_mapAck.erase(it);
-		m_lock.unlock();
-		return true;
-	} 
-	return false;
-}
-*/
-
-
-//发送
-//bool CClientSocket::Send(const void* pData, size_t nSize)
-//{
-//	if (m_sock == -1)return false;
-//	return send(m_sock, (const char*)pData, nSize, 0) > 0;
-//}
 
 bool CClientSocket::Send(const CPacket& pack)
 {
@@ -233,93 +197,13 @@ BOOL  CClientSocket::InitSockEnv() {
 unsigned CClientSocket::threadEntry(void* arg)
 {
 	CClientSocket* thiz = (CClientSocket*)arg;
-	thiz->threadFunc2();
+	thiz->threadFunc();
 	_endthreadex(0);
 	return 0;
 }
 
 //通信线程
-/*
 void CClientSocket::threadFunc()
-{
-	std::string strBuffer;
-	strBuffer.resize(BUFSIZE);
-	char* pBuffer = (char*)strBuffer.c_str();
-	int index = 0;
-
-	InitSocket();//初始化网络
-	while (m_sock != INVALID_SOCKET)
-	{
-		if (m_lstSend.size() > 0)//等待发送队列不为空
-		{
-			TRACE("lstSend size:%d\r\n", m_lstSend.size());
-			m_lock.lock();
-			CPacket& head = m_lstSend.front();//取出请求队列队头数据包
-			m_lock.unlock();
-			if (Send(head) == false)
-			{
-				TRACE("发送失败!\r\n");
-				continue;
-			}
-			//发送成功
-			std::map<HANDLE, std::list<CPacket>&>::iterator it = m_mapAck.find(head.hEvent);//找到储存结果对于的key
-			if (it != m_mapAck.end())
-			{
-				std::map<HANDLE, bool>::iterator it0 = m_mapAutoClosed.find(head.hEvent);//取网络长短连接标记
-				do
-				{
-					//等待应答
-					int len = recv(m_sock, pBuffer + index, BUFSIZE - index, 0);
-					if ((len > 0) || (index > 0))
-					{
-						index += len;
-						size_t size = (size_t)index;
-						CPacket pack((BYTE*)pBuffer, size);
-						if (size > 0)//成功解包
-						{
-							//将接收到的包储存到事件key对应的value列表中(list<CPacket>)
-							pack.hEvent = head.hEvent;
-							it->second.push_back(pack);
-							memmove(pBuffer, pBuffer + size, index - size);
-							index -= size;
-							if (it0->second)//事件是短连接(如鼠标事件，查看锁机事件，收到一个包网络就可以关闭了)
-							{
-								SetEvent(head.hEvent);//短连接收一个包立马通知主线程接收完成
-								break;
-							}
-						}
-					}
-					else if (len <= 0 && index <= 0)//对端网络关闭，缓冲区也读取完毕
-					{
-						CloseSocket();
-						SetEvent(head.hEvent);//长连接所有包接收完成/服务器关闭命令之后,再通知主线程接收完成
-						if (it0 != m_mapAutoClosed.end())
-						{
-							TRACE("SetEvent %d %d\r\n", head.sCmd, it0->second);
-						}
-						else
-						{
-							TRACE("异常情况，没有对应的pair\r\n");
-						}
-						break;
-					}
-				} while (it0->second == false);//保证长连接继续接收，如文件下载会分为多个包发送过来
-
-				m_lock.lock();
-				m_lstSend.pop_front();//处理完一个请求，从请求队列中弹出来
-				m_mapAutoClosed.erase(head.hEvent);//删除长短标记
-				m_lock.unlock();
-				if (InitSocket() == false)InitSocket();
-			}
-		}
-		Sleep(1);
-	}
-	CloseSocket();
-
-}
-*/
-//通信线程
-void CClientSocket::threadFunc2()
 {
 	SetEvent(m_eventInvoke);//主线程在阻塞等待事件被唤醒(构造函数中)
 
@@ -339,7 +223,7 @@ void CClientSocket::threadFunc2()
 //通信处理函数 wParam:数据  lParam:回调窗口句柄
 void CClientSocket::SendPack(UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-	//消息数据结构（数据和数据长度,模式）
+	//消息数据结构（数据,模式，附加参数）
 	//回调消息数据结构（HWND）
 	PACKET_DATA data = *(PACKET_DATA*)wParam;
 	delete (PACKET_DATA*)wParam;

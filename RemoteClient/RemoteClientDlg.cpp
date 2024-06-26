@@ -85,7 +85,7 @@ BEGIN_MESSAGE_MAP(CRemoteClientDlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_NOTIFY(IPN_FIELDCHANGED, IDC_IPADDRESS_SERV, &CRemoteClientDlg::OnIpnFieldchangedIpaddressServ)
 	ON_EN_CHANGE(IDC_EDIT_PORT, &CRemoteClientDlg::OnEnChangeEditPort)
-	ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketAck)
+	ON_MESSAGE(WM_SEND_PACK_ACK, &CRemoteClientDlg::OnSendPacketMessageAck)
 END_MESSAGE_MAP()
 
 
@@ -537,7 +537,7 @@ void CRemoteClientDlg::OnEnChangeEditPort()
 	pController->UpdateAddress(IP_Address, atoi((LPCTSTR)IP_PORT));
 }
 
-LRESULT CRemoteClientDlg::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+LRESULT CRemoteClientDlg::OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam)
 {
 	if (lParam == -1 || (lParam == -2))//错误处理
 	{

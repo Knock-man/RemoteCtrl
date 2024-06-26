@@ -54,7 +54,7 @@ enum {
 typedef struct PacketData {
 	std::string strData;//数据
 	UINT nMode;//模式
-	WPARAM AttParam;
+	WPARAM AttParam;//附加参数
 	PacketData(const char* pData, size_t nLen, UINT mode, WPARAM nAttParam = 0)
 	{
 		strData.resize(nLen);

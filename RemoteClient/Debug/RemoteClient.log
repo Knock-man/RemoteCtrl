@@ -1,6 +1,5 @@
-﻿  CWatchDialog.cpp
-  ClientController.cpp
-  RemoteClient.cpp
+﻿  ClientController.cpp
+  ClientSocket.cpp
   RemoteClientDlg.cpp
   正在生成代码...
   RemoteClient.vcxproj -> C:\Users\xbj\Desktop\远控\RemoteCtrl\Debug\RemoteClient.exe

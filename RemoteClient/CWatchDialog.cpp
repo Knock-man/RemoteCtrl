@@ -44,7 +44,7 @@ BEGIN_MESSAGE_MAP(CWatchDialog, CDialog)
 	ON_STN_CLICKED(IDC_WATCH, &CWatchDialog::OnStnClickedWatch)
 	ON_BN_CLICKED(IDC_BTN_LOCK, &CWatchDialog::OnBnClickedBtnLock)
 	ON_BN_CLICKED(IDC_BTN_UNLOCK, &CWatchDialog::OnBnClickedBtnUnlock)
-	ON_MESSAGE(WM_SEND_PACK_ACK,&CWatchDialog::OnSendPacketAck)
+	ON_MESSAGE(WM_SEND_PACK_ACK,&CWatchDialog::OnSendPacketMessageAck)
 END_MESSAGE_MAP()
 
 
@@ -278,7 +278,7 @@ void CWatchDialog::OnBnClickedBtnUnlock()
 
 
 //接收ACK消息处理函数
-LRESULT CWatchDialog::OnSendPacketAck(WPARAM wParam, LPARAM lParam)
+LRESULT CWatchDialog::OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam)
 {
 	if (lParam == -1 || (lParam == -2))//错误处理
 	{

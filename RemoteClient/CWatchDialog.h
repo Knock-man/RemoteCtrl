@@ -54,7 +54,7 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);//定时取图片缓冲区数据展示 已被弃用
 	CStatic m_picture;
 	////接收结果消息 wParam:数据包  lParam:附带参数（(树节点句柄/文件指针)）
-	afx_msg LRESULT OnSendPacketAck(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnSendPacketMessageAck(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);//左键双击
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);//左键按下
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);//左键弹起
